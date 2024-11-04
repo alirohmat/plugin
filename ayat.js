@@ -2,8 +2,8 @@ import axios from 'axios'
 
 export default (handler) => {
     handler.reg({
-        cmd: ['alquran', 'quran'],
-        tags: 'information',
+        cmd: ['ayat', 'ayat'],
+        tags: 'main',
         desc: 'Mengambil ayat Alquran',
         isLimit: true,
         run: async (m, { sock }) => {
