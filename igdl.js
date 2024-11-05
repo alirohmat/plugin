@@ -1,5 +1,5 @@
 import pkg from 'nayan-media-downloader'
-const { instagram } = pkg
+const instagram = pkg.instagram
 
 export default (handler) => {
     handler.reg({
