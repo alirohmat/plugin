@@ -3,7 +3,7 @@ const { instagram } = pkg
 
 export default (handler) => {
     handler.reg({
-        cmd: ['instagram', 'ig', 'igdl'],
+        cmd: ['ig', 'igdl'],
         tags: 'downloader',
         desc: 'Instagram downloader (support reel/story)',
         isLimit: true,
