@@ -1,8 +1,9 @@
-import { instagram } from 'nayan-media-downloader'
+import pkg from 'nayan-media-downloader'
+const { instagram } = pkg
 
 export default (handler) => {
     handler.reg({
-        cmd: ['ig', 'igdl'],
+        cmd: ['instagram', 'ig', 'igdl'],
         tags: 'downloader',
         desc: 'Instagram downloader (support reel/story)',
         isLimit: true,
