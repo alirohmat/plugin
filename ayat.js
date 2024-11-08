@@ -1,18 +1,18 @@
-import fetch from 'node-fetch';
+import axios from 'axios';
 
 export default (handler) => {
     handler.reg({
         cmd: ['ayat', 'quran'],
         tags: 'main',
-        desc: 'Kirim ayat, terjemahan, dan media dari Quran secara random',
+        desc: 'Kirim ayat, terjemahan, dan media dari Quran',
         isLimit: true,
         run: async (m, { sock }) => {
             const url = 'https://quran-api-id-smoky.vercel.app/random';  // Ganti dengan URL API Anda
 
             try {
-                // Ambil data dari API
-                const response = await fetch(url);
-                const data = await response.json();
+                // Ambil data dari API menggunakan axios
+                const response = await axios.get(url);
+                const data = response.data;
 
                 // Menyiapkan pesan dengan teks Arab, terjemahan, dan tautan audio
                 const textMessage = `*Ayat di dalam Quran:* ${data.number.inQuran} (Surah ${data.number.inSurah})
