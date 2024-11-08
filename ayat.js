@@ -7,7 +7,7 @@ export default (handler) => {
         desc: 'Kirim ayat, terjemahan, dan media dari Quran secara random',
         isLimit: true,
         run: async (m, { sock }) => {
-            const url = 'URL_API_YANG_KAMU_GUNAKAN';  // Ganti dengan URL API Anda
+            const url = 'https://quran-api-id-smoky.vercel.app/random';  // Ganti dengan URL API Anda
 
             try {
                 // Ambil data dari API
