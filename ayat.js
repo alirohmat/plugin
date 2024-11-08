@@ -1,39 +1,38 @@
-import axios from 'axios'
+import fetch from 'node-fetch';
 
 export default (handler) => {
     handler.reg({
-        cmd: ['ayat', 'ayat'],
-        tags: 'main',
-        desc: 'Mengambil ayat Alquran',
+        cmd: ['ayat', 'quran'],
+        tags: 'islamic',
+        desc: 'Kirim ayat, terjemahan, dan media dari API Quran',
         isLimit: true,
         run: async (m, { sock }) => {
-            // Memastikan ada nomor ayat yang diminta
-            const ayatNumber = m.text ? m.text.trim() : null;
-            if (!ayatNumber) return m.reply('Silahkan masukkan nomor ayat Alquran yang ingin diambil.');
+            const url = 'URL_API_YANG_KAMU_GUNAKAN';  // Ganti dengan URL API Anda
 
-            // Mengambil data ayat dari API
             try {
-                const response = await axios.get(`https://api.quran.sindbad.dev/ayat/${ayatNumber}`);
-                const ayat = response.data.data;
+                // Ambil data dari API
+                const response = await fetch(url);
+                const data = await response.json();
 
-                // Memeriksa apakah data ayat ditemukan
-                if (!ayat) return m.reply('Ayat tidak ditemukan.');
+                // Menyiapkan pesan dengan teks Arab, terjemahan, dan tautan audio
+                const textMessage = `*Ayat di dalam Quran:* ${data.number.inQuran} (Surah ${data.number.inSurah})
+                
+*Arab:* ${data.arab}
 
-                // Menyusun pesan untuk mengirimkan ayat
-                const message = `
-Ayat: ${ayat.verse}
-Teks: ${ayat.text}
-Terjemahan: ${ayat.translation}
-Audio: ${ayat.audio_url}
-Tafsir: ${ayat.tafsir}
-                `.trim();
+*Terjemahan:* ${data.translation}`;
 
-                // Mengirim pesan ayat ke chat
-                await sock.sendMessage(m.from, { text: message });
-                m.react("✅");
+                // Mengirim gambar utama ayat
+                await sock.sendMessage(m.from, { image: { url: data.image.primary }, caption: textMessage });
+
+                // Mengirim audio dari qari tertentu, misalnya alafasy
+                await sock.sendMessage(m.from, { audio: { url: data.audio.alafasy }, mimetype: 'audio/mp4' });
+
+                // Menambahkan tafsir pendek dari Kemenag
+                const tafsirMessage = `*Tafsir Pendek:*\n${data.tafsir.kemenag.short}`;
+                await sock.sendMessage(m.from, { text: tafsirMessage });
+
             } catch (error) {
-                console.error(error);
-                m.reply('Terjadi kesalahan saat mengambil ayat Alquran. Silahkan coba lagi.');
+                m.reply(`Gagal mengambil data: ${error.message}`);
             }
         }
     });
