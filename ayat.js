@@ -3,8 +3,8 @@ import fetch from 'node-fetch';
 export default (handler) => {
     handler.reg({
         cmd: ['ayat', 'quran'],
-        tags: 'islamic',
-        desc: 'Kirim ayat, terjemahan, dan media dari API Quran',
+        tags: 'main',
+        desc: 'Kirim ayat, terjemahan, dan media dari Quran secara random',
         isLimit: true,
         run: async (m, { sock }) => {
             const url = 'URL_API_YANG_KAMU_GUNAKAN';  // Ganti dengan URL API Anda
