@@ -2,15 +2,15 @@ import axios from 'axios';
 
 export default (handler) => {
     handler.reg({
-        cmd: ['gemini', 'geminiai'],
+        cmd: ['kang'],
         tags: 'ai',
         desc: 'Gemini Pro',
-        isLimit: true,
+        isLimit: false,
         run: async (m) => {
-            async function getGeminiAIResponse(text, user) {
+            async function getGeminiAIResponse(text) {
                 try {
                     const response = await axios.post(
-                        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=YOUR_API_KEY',
+                        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyAaoUcXXAowS1JFOEPnMWCbNJg7ys3GrPw',
                         {
                             contents: [
                                 {
@@ -29,7 +29,9 @@ export default (handler) => {
                         }
                     );
 
-                    return response.data; // Sesuaikan dengan struktur respons API
+                    // Ambil teks dari respons API
+                    const result = response.data.candidates[0].content.parts[0].text;
+                    return result;
                 } catch (error) {
                     console.error("Terjadi kesalahan:", error.message);
                     throw new Error("Gagal mendapatkan respons dari AI.");
@@ -38,12 +40,9 @@ export default (handler) => {
 
             try {
                 const budy = m.text;
-                const user = m.sender;
-                const result = await getGeminiAIResponse(budy, user);
+                const result = await getGeminiAIResponse(budy);
 
-                const output = typeof result === 'object' ? JSON.stringify(result, null, 2) : result;
-
-                m.reply(output)
+                m.reply(result); // Balas dengan hasil teks
             } catch (error) {
                 console.error("Error:", error.message);
                 m.reply("Terjadi kesalahan dalam mendapatkan respons.");
