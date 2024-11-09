@@ -63,7 +63,7 @@ export default (handler) => {
 
             let teks = `${x}INFO SERVER${x}
 - Speed Respons: _${resp}_
-- Hostname: _amiruldev_
+- Hostname: _Brogalan Blora_
 - CPU Core: _${cpus.length}_
 - Platform : _${os.platform()}_
 - OS : _${os.version()} / ${os.release()}_
