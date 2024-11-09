@@ -2,13 +2,13 @@ import axios from 'axios';
 
 export default (handler) => {
     handler.reg({
-        cmd: ['extract'],
+        cmd: ['short'],
         tags: 'tools',
         desc: 'Ekstrak konten dari URL dan ringkas menggunakan AI',
-        isLimit: false,
+        isOwner: true,
         run: async (m) => {
             const tavilyApiKey = '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'; // Ganti dengan Tavily API Key kamu
-            const groqApiKey = 'GROQ_API_KEY'; // Ganti dengan API Key Groq
+            const groqApiKey = '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'; // Ganti dengan API Key Groq
             const urls = m.text.split(' '); // Mengambil URL dari pesan yang dikirim
 
             async function extractContentFromUrls(urls) {
