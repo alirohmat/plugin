@@ -2,13 +2,13 @@ import axios from 'axios';
 
 export default (handler) => {
     handler.reg({
-        cmd: ['short'],
+        cmd: ['extract'],
         tags: 'tools',
         desc: 'Ekstrak konten dari URL dan ringkas menggunakan AI',
-        isOwner: true,
+        isLimit: false,
         run: async (m) => {
             const tavilyApiKey = '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'; // Ganti dengan Tavily API Key kamu
-            const groqApiKey = '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'; // Ganti dengan API Key Groq
+            const groqApiKey = 'GROQ_API_KEY'; // Ganti dengan API Key Groq
             const urls = m.text.split(' '); // Mengambil URL dari pesan yang dikirim
 
             async function extractContentFromUrls(urls) {
@@ -26,26 +26,18 @@ export default (handler) => {
                         }
                     );
 
-                    const { results, failed_results } = response.data;
+                    const { results } = response.data;
 
-                    let message = '📄 *Hasil Ekstraksi Konten* 📄\n\n';
+                    let summaryMessage = '📄 *Ringkasan Konten* 📄\n\n';
                     for (const result of results) {
                         const paragraphs = result.raw_content.split('\n').filter(p => p.trim() !== '').join('\n\n');
-                        message += `🌐 *URL*: ${result.url}\n\n📖 *Konten Ekstraksi*: \n${paragraphs}\n\n`;
 
                         // Ringkas konten menggunakan API AI
                         const summary = await summarizeContent(paragraphs);
-                        message += `✍️ *Ringkasan Konten*: \n${summary}\n\n======\n\n`;
+                        summaryMessage += `🌐 *URL*: ${result.url}\n\n✍️ *Ringkasan Konten*: \n${summary}\n\n======\n\n`;
                     }
 
-                    if (failed_results.length > 0) {
-                        message += '❗ *Gagal Ekstraksi* ❗\n\n';
-                        failed_results.forEach(failed => {
-                            message += `🚫 URL: ${failed.url}\n🔍 Error: ${failed.error}\n\n`;
-                        });
-                    }
-
-                    return message;
+                    return summaryMessage;
                 } catch (error) {
                     console.error("Terjadi kesalahan:", error.message);
                     throw new Error("Gagal mengekstrak konten dari URL.");
@@ -85,7 +77,7 @@ export default (handler) => {
 
             try {
                 const resultMessage = await extractContentFromUrls(urls);
-                m.reply(resultMessage); // Balas dengan hasil ekstraksi dan ringkasan
+                m.reply(resultMessage); // Balas hanya dengan hasil ringkasan
             } catch (error) {
                 console.error("Error:", error.message);
                 m.reply("Terjadi kesalahan dalam mengekstrak atau merangkum konten.");
