@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export default (handler) => {
     handler.reg({
-        cmd: ['woco'],
+        cmd: ['extract'],
         tags: 'tools',
         desc: 'Ekstrak konten dari URL',
         isLimit: false,
@@ -28,15 +28,18 @@ export default (handler) => {
                     const { results, failed_results } = response.data;
 
                     // Proses hasil ekstraksi
-                    let message = 'Hasil Ekstraksi:\n\n';
+                    let message = '📄 *Hasil Ekstraksi Konten* 📄\n\n';
                     results.forEach(result => {
-                        message += `URL: ${result.url}\nKonten: ${result.raw_content}\n\n`;
+                        // Pisahkan konten menjadi paragraf dan tampilkan dengan format rapi
+                        const paragraphs = result.raw_content.split('\n').filter(p => p.trim() !== '').join('\n\n');
+
+                        message += `🌐 *URL*: ${result.url}\n\n📖 *Konten Ekstraksi*: \n${paragraphs}\n\n======\n\n`;
                     });
 
                     if (failed_results.length > 0) {
-                        message += 'Gagal Ekstraksi:\n\n';
+                        message += '❗ *Gagal Ekstraksi* ❗\n\n';
                         failed_results.forEach(failed => {
-                            message += `URL: ${failed.url}\nError: ${failed.error}\n\n`;
+                            message += `🚫 URL: ${failed.url}\n🔍 Error: ${failed.error}\n\n`;
                         });
                     }
 
