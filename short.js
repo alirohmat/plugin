@@ -8,7 +8,7 @@ export default (handler) => {
         isLimit: false,
         run: async (m) => {
             const tavilyApiKey = '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'; // Ganti dengan Tavily API Key kamu
-            const groqApiKey = 'GROQ_API_KEY'; // Ganti dengan API Key Groq
+            const groqApiKey = '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'; // Ganti dengan API Key Groq
             const urls = m.text.split(' '); // Mengambil URL dari pesan yang dikirim
 
             async function extractContentFromUrls(urls) {
