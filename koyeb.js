@@ -3,77 +3,79 @@ import v8 from 'v8'
 import fs from 'fs'
 
 export default (handler) => {
-    handler.reg({
-        cmd: ['koyeb'],
-        tags: 'main',
-        desc: 'Detail server gratisan koyeb',
-        run: async (m, { func }) => {
-            const used = process.memoryUsage()
-            const cpus = os.cpus().map(cpu => {
-                cpu.total = Object.keys(cpu.times).reduce(
-                    (last, type) => last + cpu.times[type],
-                    0
-                )
-                return cpu
-            })
-            const cpu = cpus.reduce(
-                (last, cpu, _, { length }) => {
-                    last.total += cpu.total
-                    last.speed += cpu.speed / length
-                    last.times.user += cpu.times.user
-                    last.times.nice += cpu.times.nice
-                    last.times.sys += cpu.times.sys
-                    last.times.idle += cpu.times.idle
-                    last.times.irq += cpu.times.irq
-                    return last
-                },
-                {
-                    speed: 0,
-                    total: 0,
-                    times: {
-                        user: 0,
-                        nice: 0,
-                        sys: 0,
-                        idle: 0,
-                        irq: 0
-                    }
-                }
-            )
-            let heapStat = v8.getHeapStatistics()
-            const x = "`"
-            const myip = await func.fetchJson("https://ipinfo.io/json")
-            function hideIp(ip) {
-                const ipSegments = ip.split(".")
-                if (ipSegments.length === 4) {
-                    ipSegments[2] = "***"
-                    ipSegments[3] = "***"
-                    return ipSegments.join(".")
-                } else {
-                    throw new Error("Invalid IP address")
-                }
-            }
-            const ips = hideIp(myip.ip)
-            const resp = `${(Date.now() - new Date(m.timestamps * 1000)) / 1000} Detik`
+  handler.reg({
+    cmd: ['koyeb'],
+    tags: 'main',
+    desc: 'Detail server gratisan koyeb',
+    run: async (m, { func }) => {
+      // Memory and CPU usage information
+      const usedMemory = process.memoryUsage()
+      const cpus = os.cpus().map(cpu => ({
+        ...cpu,
+        total: Object.values(cpu.times).reduce((total, time) => total + time, 0)
+      }))
+      
+      const cpuSummary = cpus.reduce((summary, cpu, _, { length }) => {
+        summary.total += cpu.total
+        summary.speed += cpu.speed / length
+        Object.keys(cpu.times).forEach(key => summary.times[key] += cpu.times[key])
+        return summary
+      }, {
+        speed: 0,
+        total: 0,
+        times: { user: 0, nice: 0, sys: 0, idle: 0, irq: 0 }
+      })
 
-            // Informasi Disk
-            const diskUsage = fs.statSync("/") // Menyediakan informasi direktori root
-            const totalDiskSpace = diskUsage.size
-            const freeDiskSpace = os.freemem()
-            const usedDiskSpace = totalDiskSpace - freeDiskSpace
+      const heapStats = v8.getHeapStatistics()
+      const x = "`"
+      const myip = await func.fetchJson("https://ipinfo.io/json")
+      
+      function hideIp(ip) {
+        const ipSegments = ip.split(".")
+        if (ipSegments.length === 4) {
+          ipSegments[2] = "***"
+          ipSegments[3] = "***"
+          return ipSegments.join(".")
+        } else throw new Error("Invalid IP address")
+      }
 
-            let teks = `${x}INFO SERVER${x}
-- Speed Respons: _${resp}_
+      const ipHidden = hideIp(myip.ip)
+      const responseTime = `${(Date.now() - new Date(m.timestamps * 1000)) / 1000} Detik`
+
+      // Disk Information
+      const rootDirStats = fs.statSync("/") // Root directory info
+      const totalDiskSpace = rootDirStats.size
+      const freeDiskSpace = os.freemem()
+      const usedDiskSpace = totalDiskSpace - freeDiskSpace
+
+      // Node.js and System Information
+      const nodeVersion = process.versions.node
+      const v8Version = process.versions.v8
+      const osInfo = {
+        name: os.type(),
+        release: os.release(),
+        arch: os.arch(),
+        platform: os.platform(),
+        version: os.version(),
+      }
+      const hardwareInfo = {
+        cpuCount: cpus.length,
+        cpuSpeed: cpus[0]?.speed,
+        totalMemory: os.totalmem(),
+        freeMemory: os.freemem()
+      }
+
+      let infoText = `${x}INFO SERVER${x}
+- Speed Respons: _${responseTime}_
 - Hostname: _Brogalan Blora_
-- CPU Core: _${cpus.length}_
-- Platform : _${os.platform()}_
-- OS : _${os.version()} / ${os.release()}_
-- Arch: _${os.arch()}_
-- Ram: _${func.formatSize(
-                os.totalmem() - os.freemem()
-            )}_ / _${func.formatSize(os.totalmem())}_
+- CPU Core: _${hardwareInfo.cpuCount}_
+- Platform : _${osInfo.platform}_
+- OS : _${osInfo.version} / ${osInfo.release}_
+- Arch: _${osInfo.arch}_
+- Ram: _${func.formatSize(hardwareInfo.totalMemory - hardwareInfo.freeMemory)}_ / _${func.formatSize(hardwareInfo.totalMemory)}_
 
 ${x}PROVIDER INFO${x}
-- IP: ${ips}
+- IP: ${ipHidden}
 - Region : _${myip.region} ${myip.country}_
 - ISP : _${myip.org}_
 
@@ -89,65 +91,39 @@ ${x}DISK USAGE${x}
 - Free Disk: _${func.formatSize(freeDiskSpace)}_
 
 ${x}NODE MEMORY USAGE${x}
-${Object.keys(used)
-                    .map(
-                        (key, _, arr) =>
-                            `*- ${key.padEnd(
-                                Math.max(...arr.map(v => v.length)),
-                                " "
-                            )} :* ${func.formatSize(used[key])}`
-                    )
-                    .join("\n")}
-*- Heap Executable :* ${func.formatSize(heapStat?.total_heap_size_executable)}
-*- Physical Size :* ${func.formatSize(heapStat?.total_physical_size)}
-*- Available Size :* ${func.formatSize(heapStat?.total_available_size)}
-*- Heap Limit :* ${func.formatSize(heapStat?.heap_size_limit)}
-*- Malloced Memory :* ${func.formatSize(heapStat?.malloced_memory)}
-*- Peak Malloced Memory :* ${func.formatSize(heapStat?.peak_malloced_memory)}
-*- Does Zap Garbage :* ${func.formatSize(heapStat?.does_zap_garbage)}
-*- Native Contexts :* ${func.formatSize(heapStat?.number_of_native_contexts)}
-*- Detached Contexts :* ${func.formatSize(
-                        heapStat?.number_of_detached_contexts
-                    )}
-*- Total Global Handles :* ${func.formatSize(
-                        heapStat?.total_global_handles_size
-                    )}
-*- Used Global Handles :* ${func.formatSize(heapStat?.used_global_handles_size)}
+${Object.entries(usedMemory)
+  .map(([key, value]) => `*- ${key.padEnd(12)} :* ${func.formatSize(value)}`)
+  .join("\n")}
+*- Heap Executable :* ${func.formatSize(heapStats?.total_heap_size_executable)}
+*- Physical Size :* ${func.formatSize(heapStats?.total_physical_size)}
+*- Available Size :* ${func.formatSize(heapStats?.total_available_size)}
+*- Heap Limit :* ${func.formatSize(heapStats?.heap_size_limit)}
+*- Malloced Memory :* ${func.formatSize(heapStats?.malloced_memory)}
+*- Peak Malloced Memory :* ${func.formatSize(heapStats?.peak_malloced_memory)}
+*- Native Contexts :* ${heapStats?.number_of_native_contexts}
+*- Detached Contexts :* ${heapStats?.number_of_detached_contexts}
+*- Total Global Handles :* ${func.formatSize(heapStats?.total_global_handles_size)}
+*- Used Global Handles :* ${func.formatSize(heapStats?.used_global_handles_size)}
+
 ${cpus[0]
-                    ? `
-
+  ? `
 *_Total CPU Usage_*
-${cpus[0].model.trim()} (${cpu.speed} MHZ)\n${Object.keys(cpu.times)
-                        .map(
-                            type =>
-                                `*- ${(type + "*").padEnd(6)}: ${(
-                                    (100 * cpu.times[type]) /
-                                    cpu.total
-                                ).toFixed(2)}%`
-                        )
-                        .join("\n")}
+${cpus[0].model.trim()} (${cpuSummary.speed} MHZ)
+${Object.keys(cpuSummary.times)
+  .map(type => `*- ${type.padEnd(6)}: ${(100 * cpuSummary.times[type] / cpuSummary.total).toFixed(2)}%`)
+  .join("\n")}
 
-*_CPU Core(s) Usage (${cpus.length} Core CPU)_*
+*_CPU Core(s) Usage (${hardwareInfo.cpuCount} Core CPU)_*
 ${cpus
-                        .map(
-                            (cpu, i) =>
-                                `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Object.keys(
-                                    cpu.times
-                                )
-                                    .map(
-                                        type =>
-                                            `*- ${(type + "*").padEnd(6)}: ${(
-                                                (100 * cpu.times[type]) /
-                                                cpu.total
-                                            ).toFixed(2)}%`
-                                    )
-                                    .join("\n")}`
-                        )
-                        .join("\n\n")}`
-                    : ""
-                }
+  .map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)
+${Object.keys(cpu.times)
+  .map(type => `*- ${type.padEnd(6)}: ${(100 * cpu.times[type] / cpu.total).toFixed(2)}%`)
+  .join("\n")}`)
+  .join("\n\n")}` 
+  : ""
+}
 `.trim()
-            m.reply(teks)
-        }
-    })
-              }
+      m.reply(infoText)
+    }
+  })
+}
