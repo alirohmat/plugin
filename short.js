@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export default (handler) => {
     handler.reg({
-        cmd: ['extract'],
+        cmd: ['short'],
         tags: 'tools',
         desc: 'Ekstrak konten dari URL dan ringkas menggunakan AI',
         isLimit: false,
