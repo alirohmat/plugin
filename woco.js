@@ -3,7 +3,7 @@ import axios from 'axios';
 export default (handler) => {
     handler.reg({
         cmd: ['woco'],
-        tags: 'web',
+        tags: 'tools',
         desc: 'Ekstrak konten dari URL',
         isLimit: false,
         run: async (m) => {
