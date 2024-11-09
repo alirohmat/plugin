@@ -7,7 +7,7 @@ export default (handler) => {
         desc: 'Ekstrak konten dari URL',
         isLimit: false,
         run: async (m) => {
-            const tavilyApiKey = 'tvly-YOUR_API_KEY'; // Ganti dengan Tavily API Key kamu
+            const tavilyApiKey = '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'; // Ganti dengan Tavily API Key kamu
             const urls = m.text.split(' '); // Mengambil URL dari pesan yang dikirim
 
             async function extractContentFromUrls(urls) {
