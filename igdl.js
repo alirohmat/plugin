@@ -6,7 +6,7 @@ export default (handler) => {
         cmd: ['igdown'],
         tags: 'downloader',
         desc: 'Instagram downloader (support reel/story)',
-        isLimit: true,
+        isLimit: false,
         run: async (m, { sock }) => {
             if (!m.text) return m.reply('Silahkan masukkan link Instagram (support reel/story)');
 
