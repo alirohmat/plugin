@@ -1,38 +1,38 @@
-import pkg from 'nayan-media-downloader';
-const { instagram } = pkg;
+import axios from 'axios';
 
 export default (handler) => {
     handler.reg({
-        cmd: ['igdown'],
+        cmd: ['instagram', 'ig', 'igdl'],
         tags: 'downloader',
-        desc: 'Instagram downloader (support reel/story)',
+        desc: 'Instagram video downloader',
         isLimit: false,
         run: async (m, { sock }) => {
+            // Cek apakah pengguna telah memasukkan link Instagram
             if (!m.text) return m.reply('Silahkan masukkan link Instagram (support reel/story)');
 
-            // Validasi URL Instagram
-            const isValidURL = /^(https?:\/\/)?(www\.)?instagram\.com/.test(m.text);
-            if (!isValidURL) return m.reply('Link tidak valid. Pastikan menggunakan link Instagram yang benar.');
-
             try {
-                // Menggunakan nayan-media-downloader untuk mengunduh media
-                const result = await instagram(m.text);
-
-                // Pastikan hasil data memiliki status true dan data berbentuk array
-                if (!result || !result.status || !Array.isArray(result.data)) {
-                    return m.reply('Permintaan tidak dapat diproses!');
+                // Panggil API eksternal untuk mendapatkan link download video
+                const response = await axios.get(`https://instagram-video-downloader-henna.vercel.app/api/video?postUrl=${encodeURIComponent(m.text)}`);
+                
+                // Periksa status respons API
+                if (response.data.status !== 'success' || !response.data.data.videoUrl) {
+                    return m.reply('Permintaan tidak dapat diproses atau video tidak ditemukan!');
                 }
+                
+                // Reaksi sementara proses berjalan
+                m.react("⏱️");
 
-                if (m.react) m.react("⏱️");
+                // Kirim video ke pengguna
+                await sock.sendMedia(m.from, response.data.data.videoUrl, m, {
+                    caption: `Berikut adalah video yang Anda minta:`
+                });
 
-                // Kirim setiap media yang ada di dalam result.data
-                await Promise.all(result.data.map(item => sock.sendMedia(m.from, item.url, m)));
-
-                if (m.react) m.react("✅");
+                // Reaksi setelah selesai
+                m.react("✅");
             } catch (error) {
-                console.error('Error saat mengunduh media:', error);
-                m.reply('Terjadi kesalahan saat memproses permintaan.');
+                console.error('Error saat memproses permintaan:', error);
+                m.reply('Terjadi kesalahan saat mengambil video. Coba lagi nanti.');
             }
         }
     });
-};
+}
