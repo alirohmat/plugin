@@ -4,7 +4,7 @@ export default (handler) => {
     handler.reg({
         cmd: ['kang'],
         tags: 'ai',
-        desc: 'Gemini Pro',
+        desc: 'Gemini Pro token pribadi',
         isLimit: false,
         run: async (m) => {
             async function getGeminiAIResponse(text) {
