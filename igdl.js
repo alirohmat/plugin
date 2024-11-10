@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export default (handler) => {
     handler.reg({
-        cmd: ['instagram', 'ig', 'igdl'],
+        cmd: ['igdown'],
         tags: 'downloader',
         desc: 'Instagram video downloader',
         isLimit: false,
