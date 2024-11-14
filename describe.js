@@ -1,7 +1,7 @@
 import axios from "axios";
 import FormData from "form-data";
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const fs = require("fs");
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import fs from "fs";
 
 // API Key langsung dimasukkan di sini
 const API_KEY = "AIzaSyAaoUcXXAowS1JFOEPnMWCbNJg7ys3GrPw"; // Ganti dengan API Key Anda
@@ -37,7 +37,7 @@ export default {
 
       // Menggunakan model Gemini untuk menghasilkan deskripsi gambar
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt = "Jelaskan isi gambar ini:";
+      const prompt = "Describe the content of this image:";
 
       const result = await model.generateContent([prompt, imagePart]);
       const response = await result.response;
