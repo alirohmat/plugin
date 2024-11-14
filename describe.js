@@ -4,7 +4,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const fs = require("fs");
 
 // API Key langsung dimasukkan di sini
-const API_KEY = "your-api-key-here"; // Ganti dengan API Key Anda
+const API_KEY = "AIzaSyAaoUcXXAowS1JFOEPnMWCbNJg7ys3GrPw"; // Ganti dengan API Key Anda
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export default {
@@ -37,7 +37,7 @@ export default {
 
       // Menggunakan model Gemini untuk menghasilkan deskripsi gambar
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt = "Describe the content of this image:";
+      const prompt = "Jelaskan isi gambar ini:";
 
       const result = await model.generateContent([prompt, imagePart]);
       const response = await result.response;
