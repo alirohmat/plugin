@@ -1,7 +1,11 @@
 import ffmpegPath from 'ffmpeg-static'; // Mengimpor ffmpeg-static
 import ffmpeg from 'fluent-ffmpeg';
+import fs from 'fs';
+import path from 'path';
+import { promisify } from 'util';
 
 ffmpeg.setFfmpegPath(ffmpegPath); // Menetapkan path ffmpeg dari ffmpeg-static
+const unlinkAsync = promisify(fs.unlink); // Menggunakan promisify untuk menghapus file
 
 export default (handler) => {
     // Menu Sticker
@@ -27,8 +31,14 @@ export default (handler) => {
                     const buffer = await quoted.download();
                     console.log("Buffer received: ", buffer);
 
+                    // Simpan file sementara
+                    const tempFilePath = path.join(__dirname, `tempfile.${mimeType.split('/')[1]}`);
+                    fs.writeFileSync(tempFilePath, buffer);
+                    console.log(`File temporarily saved at: ${tempFilePath}`);
+
                     // Memeriksa jika video melebihi durasi 10 detik
                     if (quoted?.msg?.seconds > 10) {
+                        fs.unlinkSync(tempFilePath); // Hapus file sementara jika durasi video terlalu panjang
                         return m.reply("Max video length is 10 seconds.");
                     }
 
@@ -46,12 +56,16 @@ export default (handler) => {
                     }
 
                     // Mengonversi buffer menjadi stiker dan mengirimnya kembali
-                    await sock.sendMessage(m.chat, { sticker: buffer }, { 
+                    await sock.sendMessage(m.chat, { sticker: { url: tempFilePath } }, { 
                         quoted: m,
                         asSticker: true, 
                         packname: exif.packName, 
                         author: exif.author 
                     });
+
+                    // Hapus file sementara setelah proses selesai
+                    fs.unlinkSync(tempFilePath);
+                    console.log(`Temporary file deleted: ${tempFilePath}`);
                     
                 } catch (error) {
                     console.error("Error converting to sticker:", error);
