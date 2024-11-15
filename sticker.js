@@ -14,11 +14,12 @@ export default (handler) => {
             const quoted = m.isQuoted ? m.quoted : m;
 
             // Debug: Log MIME dan informasi file
-            console.log("Quoted MIME: ", quoted.mime);
+            console.log("Quoted MIME: ", quoted?.message?.imageMessage?.mimetype);
             console.log("Quoted Message: ", quoted);
 
             // Periksa apakah file yang dikutip adalah gambar atau video
-            if (/image|video|webp/i.test(quoted.mime)) {
+            const mimeType = quoted?.message?.imageMessage?.mimetype;
+            if (mimeType && /image|video|webp/i.test(mimeType)) {
                 m.reply("Processing, please wait...");
 
                 try {
