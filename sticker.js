@@ -1,5 +1,5 @@
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { fileURLToPath } from 'url'; // Mengimpor fileURLToPath untuk mengonversi URL ke path
+import { dirname } from 'path'; // Mengimpor dirname untuk mendapatkan direktori dari path
 import ffmpegPath from 'ffmpeg-static'; 
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
@@ -9,14 +9,14 @@ import { promisify } from 'util';
 ffmpeg.setFfmpegPath(ffmpegPath); 
 const unlinkAsync = promisify(fs.unlink); 
 
-// Menentukan path direktori dari file modul ini
+// Mengonversi import.meta.url menjadi path yang bisa digunakan
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default (handler) => {
     handler.reg({
         cmd: ["sticker", "stiker"],
-        tags: "tools",
+        tags: "convert",
         desc: "Convert image/video to sticker",
         isLimit: true,
         run: async (m, { sock }) => {
