@@ -1,24 +1,9 @@
-import { fileURLToPath } from 'url'; // Mengimpor fileURLToPath untuk mengonversi URL ke path
-import { dirname } from 'path'; // Mengimpor dirname untuk mendapatkan direktori dari path
-import ffmpegPath from 'ffmpeg-static'; 
-import ffmpeg from 'fluent-ffmpeg';
-import fs from 'fs';
-import path from 'path';
-import { promisify } from 'util';
-
-ffmpeg.setFfmpegPath(ffmpegPath); 
-const unlinkAsync = promisify(fs.unlink); 
-
-// Mengonversi import.meta.url menjadi path yang bisa digunakan
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 export default (handler) => {
     handler.reg({
         cmd: ["sticker", "stiker"],
-        tags: "convert",
+        tags: "tools",
         desc: "Convert image/video to sticker",
-        isLimit: true,
+        isLimit: false,
         run: async (m, { sock }) => {
             const quoted = m.isQuoted ? m.quoted : m;
 
@@ -34,6 +19,10 @@ export default (handler) => {
                 try {
                     // Mengunduh buffer dari pesan yang dikutip
                     const buffer = await quoted.download();
+                    if (!buffer) {
+                        m.reply("Failed to download file.");
+                        return;
+                    }
                     console.log("Buffer received: ", buffer);
 
                     // Simpan file sementara
@@ -65,7 +54,7 @@ export default (handler) => {
                     }
 
                     // Mengonversi buffer menjadi stiker dan mengirimnya kembali
-                    await sock.sendMessage(m.chat, { sticker: { url: tempFilePath } }, { 
+                    await sock.sendMessage(m.chat, { sticker: buffer }, { 
                         quoted: m,
                         asSticker: true, 
                         packname: exif.packName, 
