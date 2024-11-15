@@ -7,11 +7,15 @@ export default (handler) => {
     // Menu Sticker
     handler.reg({
         cmd: ["sticker", "stiker"],
-        tags: "tools",
+        tags: "convert",
         desc: "Convert image/video to sticker",
         isLimit: true,
         run: async (m, { sock }) => {
             const quoted = m.isQuoted ? m.quoted : m;
+
+            // Debug: Log MIME dan informasi file
+            console.log("Quoted MIME: ", quoted.mime);
+            console.log("Quoted Message: ", quoted);
 
             // Periksa apakah file yang dikutip adalah gambar atau video
             if (/image|video|webp/i.test(quoted.mime)) {
@@ -20,9 +24,12 @@ export default (handler) => {
                 try {
                     // Mengunduh buffer dari pesan yang dikutip
                     const buffer = await quoted.download();
+                    console.log("Buffer received: ", buffer);
 
                     // Memeriksa jika video melebihi durasi 10 detik
-                    if (quoted?.msg?.seconds > 10) return m.reply("Max video length is 10 seconds.");
+                    if (quoted?.msg?.seconds > 10) {
+                        return m.reply("Max video length is 10 seconds.");
+                    }
 
                     // Metadata untuk stiker
                     let exif = {
