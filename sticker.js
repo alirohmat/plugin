@@ -10,9 +10,9 @@ const unlinkAsync = promisify(fs.unlink);
 export default (handler) => {
     handler.reg({
         cmd: ["sticker", "stiker"],
-        tags: "convert",
+        tags: "tools",
         desc: "Convert image/video to sticker",
-        isLimit: true,
+        isLimit: false,
         run: async (m, { sock }) => {
             const quoted = m.isQuoted ? m.quoted : m;
 
