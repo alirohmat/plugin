@@ -1,14 +1,13 @@
-import ffmpegPath from 'ffmpeg-static'; // Mengimpor ffmpeg-static
+import ffmpegPath from 'ffmpeg-static'; 
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 
-ffmpeg.setFfmpegPath(ffmpegPath); // Menetapkan path ffmpeg dari ffmpeg-static
-const unlinkAsync = promisify(fs.unlink); // Menggunakan promisify untuk menghapus file
+ffmpeg.setFfmpegPath(ffmpegPath); 
+const unlinkAsync = promisify(fs.unlink); 
 
 export default (handler) => {
-    // Menu Sticker
     handler.reg({
         cmd: ["sticker", "stiker"],
         tags: "convert",
@@ -32,13 +31,18 @@ export default (handler) => {
                     console.log("Buffer received: ", buffer);
 
                     // Simpan file sementara
-                    const tempFilePath = path.join(__dirname, `tempfile.${mimeType.split('/')[1]}`);
-                    fs.writeFileSync(tempFilePath, buffer);
+                    const extension = mimeType.split('/')[1];
+                    if (!extension) {
+                        m.reply("Invalid file type.");
+                        return;
+                    }
+                    const tempFilePath = path.join(__dirname, `tempfile.${extension}`);
+                    await fs.promises.writeFile(tempFilePath, buffer);
                     console.log(`File temporarily saved at: ${tempFilePath}`);
 
                     // Memeriksa jika video melebihi durasi 10 detik
                     if (quoted?.msg?.seconds > 10) {
-                        fs.unlinkSync(tempFilePath); // Hapus file sementara jika durasi video terlalu panjang
+                        await unlinkAsync(tempFilePath); // Hapus file sementara jika durasi video terlalu panjang
                         return m.reply("Max video length is 10 seconds.");
                     }
 
@@ -48,7 +52,6 @@ export default (handler) => {
                         author: "YourName",
                     };
 
-                    // Mengambil packName dan author jika diinput oleh pengguna
                     if (m.text) {
                         let [packname, author] = m.text.split("|");
                         exif.packName = packname ? packname.trim() : exif.packName;
@@ -64,7 +67,7 @@ export default (handler) => {
                     });
 
                     // Hapus file sementara setelah proses selesai
-                    fs.unlinkSync(tempFilePath);
+                    await unlinkAsync(tempFilePath);
                     console.log(`Temporary file deleted: ${tempFilePath}`);
                     
                 } catch (error) {
