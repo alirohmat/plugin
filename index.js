@@ -1,4 +1,4 @@
-const { makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
+const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const { setInterval, clearInterval } = require('timers');
 const { Boom } = require('@hapi/boom');
 
@@ -17,21 +17,16 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // Fungsi untuk menangani pesan
 async function handleMessage(sock, message) {
   const jid = message.key.remoteJid;
-  console.log('Received message:', message); // Log untuk memeriksa pesan yang diterima
 
   if (message.message.conversation) {
     const text = message.message.conversation.toLowerCase();
-    console.log(`Received message text: ${text}`); // Log pesan yang diterima
+    console.log(`Received message: ${text}`); // Log pesan yang diterima
 
     if (text === 'ping') {
-      try {
-        await sock.sendMessage(jid, { text: 'pong' });
-        console.log(`Sent response: pong to ${jid}`); // Log pesan yang dikirim
-      } catch (error) {
-        console.error('Error sending response:', error);
-      }
+      await sock.sendMessage(jid, { text: 'pong' });
+      console.log(`Sent response: pong`); // Log pesan yang dikirim
     } else {
-      console.log('Received non-ping message:', text);
+      console.log('Pesan lain:', message.message.conversation);
     }
   }
 }
@@ -47,7 +42,7 @@ async function connectToWhatsApp() {
     // Membuat koneksi WhatsApp
     const sock = makeWASocket({
       auth: state,
-      printQRInTerminal: true
+      printQRInTerminal: true // Mencetak QR ke terminal
     });
 
     // Set interval untuk update presence
@@ -57,7 +52,6 @@ async function connectToWhatsApp() {
 
     // Mendengarkan peristiwa messages.upsert
     sock.ev.on('messages.upsert', async ({ messages }) => {
-      console.log('Received messages:', messages); // Log untuk memeriksa pesan yang diterima
       for (const m of messages) {
         if (!m.message || !m.key || !m.key.remoteJid) continue;
         await handleMessage(sock, m);
@@ -77,9 +71,14 @@ async function connectToWhatsApp() {
                                     && lastDisconnect.error.output?.statusCode !== DisconnectReason.badSession;
             console.log({ event: 'Connection closed', reason: lastDisconnect.error.message, shouldReconnect });
 
-            if (shouldReconnect) {
+            // Jika login/logout, maka hubungkan ulang
+            if (lastDisconnect.error?.output?.statusCode === DisconnectReason.loggedOut) {
+              console.log('Logged out. QR should be printed.');
+              await connectToWhatsApp(); // Memulai ulang koneksi untuk mencetak QR
+            } else if (shouldReconnect) {
+              console.log('Reconnecting...');
               await delay(5000);
-              connectToWhatsApp();
+              connectToWhatsApp(); // Cobalah untuk menyambung kembali
             }
           }
           break;
