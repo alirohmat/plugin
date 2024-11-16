@@ -1,4 +1,4 @@
-const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { setInterval, clearInterval } = require('timers');
 const { Boom } = require('@hapi/boom');
 
@@ -42,7 +42,7 @@ async function connectToWhatsApp() {
     // Membuat koneksi WhatsApp
     const sock = makeWASocket({
       auth: state,
-      printQRInTerminal: true // Mencetak QR ke terminal
+      printQRInTerminal: true // Pastikan QR dicetak ke terminal
     });
 
     // Set interval untuk update presence
@@ -67,14 +67,14 @@ async function connectToWhatsApp() {
           clearInterval(presenceInterval);
           if (lastDisconnect.error) {
             const isBoom = lastDisconnect.error instanceof Boom;
-            const shouldReconnect = isBoom && lastDisconnect.error.output?.statusCode !== DisconnectReason.loggedOut 
+            const shouldReconnect = isBoom && lastDisconnect.error.output?.statusCode !== DisconnectReason.loggedOut
                                     && lastDisconnect.error.output?.statusCode !== DisconnectReason.badSession;
+
             console.log({ event: 'Connection closed', reason: lastDisconnect.error.message, shouldReconnect });
 
-            // Jika login/logout, maka hubungkan ulang
             if (lastDisconnect.error?.output?.statusCode === DisconnectReason.loggedOut) {
               console.log('Logged out. QR should be printed.');
-              await connectToWhatsApp(); // Memulai ulang koneksi untuk mencetak QR
+              await connectToWhatsApp(); // Mulai ulang untuk mencetak QR
             } else if (shouldReconnect) {
               console.log('Reconnecting...');
               await delay(5000);
