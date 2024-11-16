@@ -1,40 +1,16 @@
 const makeWASocket = require('@whiskeysockets/baileys').default;
 const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
+const { DisconnectReason } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
-const DisconnectReason = require('@whiskeysockets/baileys').DisconnectReason;
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Deklarasi sock di luar fungsi
-let sock;
-
-async function handleMessage(sock, message) {
-  try {
-    // Memeriksa apakah pesan berupa "Ping"
-    if (message.message && message.message.conversation) {
-      const msgText = message.message.conversation.trim().toLowerCase();
-
-      if (msgText === 'ping') {
-        console.log('Received "Ping", sending "Pong"...');
-        // Mengirimkan balasan "Pong" ke pengirim pesan
-        await sock.sendMessage(message.key.remoteJid, { text: 'Pong' });
-      }
-    }
-  } catch (error) {
-    console.error('Error handling message:', error);
-  }
-}
 
 // Fungsi utama untuk koneksi ke WhatsApp
 async function connectToWhatsApp() {
-  let presenceInterval; // Interval untuk presence update
-  let isLoggedIn = false; // Flag untuk status login
-
   try {
     // Menggunakan auth state dari file
     const { state, saveCreds } = await useMultiFileAuthState('auth_info');
 
     // Membuat koneksi WhatsApp
-    sock = makeWASocket({
+    const sock = makeWASocket({
       auth: state,
       printQRInTerminal: true,
     });
@@ -96,6 +72,24 @@ async function connectToWhatsApp() {
   } catch (error) {
     console.error({ event: 'Connection error', error: error.toString() });
     clearInterval(presenceInterval); // Hentikan interval jika ada error
+  }
+}
+
+// Fungsi untuk menangani pesan masuk
+async function handleMessage(sock, message) {
+  try {
+    // Tangani pesan masuk
+    if (message.message && message.message.conversation) {
+      const msgText = message.message.conversation.trim().toLowerCase();
+
+      if (msgText === 'ping') {
+        console.log('Received "Ping", sending "Pong"...');
+        // Mengirimkan balasan "Pong" ke pengirim pesan
+        await sock.sendMessage(message.key.remoteJid, { text: 'Pong' });
+      }
+    }
+  } catch (error) {
+    console.error('Error handling message:', error);
   }
 }
 
