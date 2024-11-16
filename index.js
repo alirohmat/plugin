@@ -4,7 +4,9 @@ const { Boom } = require('@hapi/boom');
 const DisconnectReason = require('@whiskeysockets/baileys').DisconnectReason;
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Fungsi untuk menangani pesan masuk
+// Deklarasi sock di luar fungsi
+let sock;
+
 async function handleMessage(sock, message) {
   try {
     // Memeriksa apakah pesan berupa "Ping"
@@ -13,7 +15,7 @@ async function handleMessage(sock, message) {
 
       if (msgText === 'ping') {
         console.log('Received "Ping", sending "Pong"...');
-        // Mengirimkan balasan "Pong"
+        // Mengirimkan balasan "Pong" ke pengirim pesan
         await sock.sendMessage(message.key.remoteJid, { text: 'Pong' });
       }
     }
@@ -32,7 +34,7 @@ async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info');
 
     // Membuat koneksi WhatsApp
-    const sock = makeWASocket({
+    sock = makeWASocket({
       auth: state,
       printQRInTerminal: true,
     });
@@ -99,12 +101,3 @@ async function connectToWhatsApp() {
 
 // Memulai koneksi ke WhatsApp
 connectToWhatsApp();
-
-// Pengiriman pesan Ping menggunakan contoh yang Anda lampirkan
-async function sendPing() {
-  const id = 'abcd@s.whatsapp.net'; // Ganti dengan ID yang valid
-  const sentMsg = await sock.sendMessage(id, { text: 'Ping' });
-  console.log("Sent 'Ping' to:", id);
-}
-
-sendPing();
