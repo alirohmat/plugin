@@ -6,10 +6,19 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Fungsi untuk menangani pesan masuk
 async function handleMessage(sock, message) {
-  // Memeriksa apakah pesan berupa "Ping"
-  if (message.message.conversation && message.message.conversation.trim().toLowerCase() === "ping") {
-    // Mengirimkan balasan "Pong"
-    await sock.sendMessage(message.key.remoteJid, { text: "Pong" });
+  try {
+    // Memeriksa apakah pesan berupa "Ping"
+    if (message.message && message.message.conversation) {
+      const msgText = message.message.conversation.trim().toLowerCase();
+
+      if (msgText === "ping") {
+        console.log("Received 'Ping', sending 'Pong'...");
+        // Mengirimkan balasan "Pong"
+        await sock.sendMessage(message.key.remoteJid, { text: "Pong" });
+      }
+    }
+  } catch (error) {
+    console.error("Error handling message:", error);
   }
 }
 
