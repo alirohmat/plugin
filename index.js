@@ -47,7 +47,11 @@ async function connectToWhatsApp() {
 
     // Set interval untuk update presence
     presenceInterval = setInterval(() => {
-      sock.sendPresenceUpdate('unavailable');
+      if (sock.authState.creds.me) {
+        sock.sendPresenceUpdate('unavailable');
+      } else {
+        console.log('Auth state not fully populated, skipping presence update.');
+      }
     }, 3000);
 
     // Mendengarkan peristiwa messages.upsert
@@ -89,7 +93,11 @@ async function connectToWhatsApp() {
           console.log({ event: 'Connection opened' });
           clearInterval(presenceInterval);
           presenceInterval = setInterval(() => {
-            sock.sendPresenceUpdate('unavailable');
+            if (sock.authState.creds.me) {
+              sock.sendPresenceUpdate('unavailable');
+            } else {
+              console.log('Auth state not fully populated, skipping presence update.');
+            }
           }, 3000);
           break;
       }
