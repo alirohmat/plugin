@@ -79,17 +79,5 @@ async function connectToWhatsApp() {
   }
 }
 
-// Fungsi untuk menangani pesan masuk
-async function handleMessage(sock, message) {
-  const { remoteJid, fromMe } = message.key;
-  const text = message.message?.conversation || "";
-
-  if (!fromMe) {
-    console.log(`Pesan diterima dari ${remoteJid}: ${text}`);
-    // Balas pesan sebagai contoh
-    await sock.sendMessage(remoteJid, { text: "Pesan diterima!" });
-  }
-}
-
 // Memulai koneksi ke WhatsApp
 connectToWhatsApp();
