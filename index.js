@@ -1,5 +1,4 @@
-const { makeWASocket, DisconnectReason } = require('@whiskeysockets/baileys');
-const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
+const { makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { setInterval, clearInterval } = require('timers');
 const { Boom } = require('@hapi/boom');
 
@@ -18,16 +17,21 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // Fungsi untuk menangani pesan
 async function handleMessage(sock, message) {
   const jid = message.key.remoteJid;
+  console.log('Received message:', message); // Log untuk memeriksa pesan yang diterima
 
   if (message.message.conversation) {
     const text = message.message.conversation.toLowerCase();
-    console.log(`Received message: ${text}`); // Log pesan yang diterima
+    console.log(`Received message text: ${text}`); // Log pesan yang diterima
 
     if (text === 'ping') {
-      await sock.sendMessage(jid, { text: 'pong' });
-      console.log(`Sent response: pong`); // Log pesan yang dikirim
+      try {
+        await sock.sendMessage(jid, { text: 'pong' });
+        console.log(`Sent response: pong to ${jid}`); // Log pesan yang dikirim
+      } catch (error) {
+        console.error('Error sending response:', error);
+      }
     } else {
-      console.log('Pesan lain:', message.message.conversation);
+      console.log('Received non-ping message:', text);
     }
   }
 }
@@ -53,6 +57,7 @@ async function connectToWhatsApp() {
 
     // Mendengarkan peristiwa messages.upsert
     sock.ev.on('messages.upsert', async ({ messages }) => {
+      console.log('Received messages:', messages); // Log untuk memeriksa pesan yang diterima
       for (const m of messages) {
         if (!m.message || !m.key || !m.key.remoteJid) continue;
         await handleMessage(sock, m);
