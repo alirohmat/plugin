@@ -3,6 +3,14 @@ const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { DisconnectReason } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 
+let presenceInterval; // Mendefinisikan presenceInterval di luar fungsi
+let isLoggedIn = false; // Mendefinisikan isLoggedIn di luar fungsi
+
+// Fungsi untuk menunda eksekusi
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Fungsi utama untuk koneksi ke WhatsApp
 async function connectToWhatsApp() {
   try {
@@ -28,8 +36,8 @@ async function connectToWhatsApp() {
           const isBoom = lastDisconnect.error instanceof Boom;
           const shouldReconnect =
             isBoom &&
-            lastDisconnect.error.output?.statusCode!== DisconnectReason.loggedOut &&
-            lastDisconnect.error.output?.statusCode!== DisconnectReason.badSession;
+            lastDisconnect.error.output?.statusCode !== DisconnectReason.loggedOut &&
+            lastDisconnect.error.output?.statusCode !== DisconnectReason.badSession;
 
           console.log({
             event: 'Connection closed',
@@ -64,7 +72,7 @@ async function connectToWhatsApp() {
     sock.ev.on('messages.upsert', ({ messages }) => {
       console.log('Got messages:', messages);
       for (const m of messages) {
-        if (!m.message ||!m.key ||!m.key.remoteJid) continue;
+        if (!m.message || !m.key || !m.key.remoteJid) continue;
         // Tangani pesan masuk
         handleMessage(sock, m);
       }
