@@ -4,6 +4,15 @@ const { Boom } = require("@hapi/boom");
 const DisconnectReason = require("@whiskeysockets/baileys").DisconnectReason;
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Fungsi untuk menangani pesan masuk
+async function handleMessage(sock, message) {
+  // Memeriksa apakah pesan berupa "Ping"
+  if (message.message.conversation && message.message.conversation.trim().toLowerCase() === "ping") {
+    // Mengirimkan balasan "Pong"
+    await sock.sendMessage(message.key.remoteJid, { text: "Pong" });
+  }
+}
+
 // Fungsi utama untuk koneksi ke WhatsApp
 async function connectToWhatsApp() {
   let presenceInterval; // Interval untuk presence update
