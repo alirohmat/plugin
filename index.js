@@ -52,8 +52,8 @@ async function connectToWhatsApp() {
           const isBoom = lastDisconnect.error instanceof Boom;
           const shouldReconnect =
             isBoom &&
-            lastDisconnect.error.output?.statusCode !== DisconnectReason.loggedOut &&
-            lastDisconnect.error.output?.statusCode !== DisconnectReason.badSession;
+            lastDisconnect.error.output?.statusCode!== DisconnectReason.loggedOut &&
+            lastDisconnect.error.output?.statusCode!== DisconnectReason.badSession;
 
           console.log({
             event: 'Connection closed',
@@ -88,7 +88,7 @@ async function connectToWhatsApp() {
     sock.ev.on('messages.upsert', ({ messages }) => {
       console.log('Got messages:', messages);
       for (const m of messages) {
-        if (!m.message || !m.key || !m.key.remoteJid) continue;
+        if (!m.message ||!m.key ||!m.key.remoteJid) continue;
         // Tangani pesan masuk
         handleMessage(sock, m);
       }
