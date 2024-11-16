@@ -1,18 +1,40 @@
-const makeWASocket = require('@whiskeysockets/baileys').default;
+// Impor dependency yang diperlukan
+const { makeWASocket, DisconnectReason } = require('@whiskeysockets/baileys');
 const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
-const { DisconnectReason } = require('@whiskeysockets/baileys');
+const { setInterval, clearInterval } = require('timers');
 const { Boom } = require('@hapi/boom');
 
-let presenceInterval; // Mendefinisikan presenceInterval di luar fungsi
-let isLoggedIn = false; // Mendefinisikan isLoggedIn di luar fungsi
+// Membuat penyimpanan dalam memori
+const store = require('@whiskeysockets/baileys').makeInMemoryStore({});
+store.readFromFile('./baileys_store.json');
 
-// Fungsi untuk menunda eksekusi
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+// Menyimpan data ke file setiap 10 detik
+setInterval(() => {
+  store.writeToFile('./baileys_store.json');
+}, 10_000);
+
+// Fungsi untuk delay
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Fungsi untuk menangani pesan
+async function handleMessage(sock, message) {
+  const jid = message.key.remoteJid;
+
+  if (message.message.conversation) {
+    const text = message.message.conversation.toLowerCase();
+
+    if (text === 'ping') {
+      await sock.sendMessage(jid, { text: 'pong' });
+    } else {
+      console.log('Pesan lain:', message.message.conversation);
+    }
+  }
 }
 
-// Fungsi utama untuk koneksi ke WhatsApp
+// Fungsi koneksi ke WhatsApp
 async function connectToWhatsApp() {
+  let presenceInterval;
+
   try {
     // Menggunakan auth state dari file
     const { state, saveCreds } = await useMultiFileAuthState('auth_info');
@@ -20,86 +42,61 @@ async function connectToWhatsApp() {
     // Membuat koneksi WhatsApp
     const sock = makeWASocket({
       auth: state,
-      printQRInTerminal: true,
+      printQRInTerminal: true
     });
 
-    // Mendengarkan event connection.update
+    // Set interval untuk update presence
+    presenceInterval = setInterval(() => {
+      sock.sendPresenceUpdate('unavailable');
+    }, 3000);
+
+    // Mendengarkan peristiwa messages.upsert
+    sock.ev.on('messages.upsert', async ({ messages }) => {
+      for (const m of messages) {
+        if (!m.message || !m.key || !m.key.remoteJid) continue;
+        await handleMessage(sock, m);
+      }
+    });
+
+    // Mendengarkan peristiwa connection.update
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect } = update;
 
-      if (connection === 'close') {
-        // Koneksi ditutup
-        clearInterval(presenceInterval); // Hentikan interval
-        isLoggedIn = false; // Set status login ke false
+      switch (connection) {
+        case 'close':
+          clearInterval(presenceInterval);
+          if (lastDisconnect.error) {
+            const isBoom = lastDisconnect.error instanceof Boom;
+            const shouldReconnect = isBoom && lastDisconnect.error.output?.statusCode !== DisconnectReason.loggedOut 
+                                    && lastDisconnect.error.output?.statusCode !== DisconnectReason.badSession;
+            console.log({ event: 'Connection closed', reason: lastDisconnect.error.message, shouldReconnect });
 
-        if (lastDisconnect?.error) {
-          const isBoom = lastDisconnect.error instanceof Boom;
-          const shouldReconnect =
-            isBoom &&
-            lastDisconnect.error.output?.statusCode !== DisconnectReason.loggedOut &&
-            lastDisconnect.error.output?.statusCode !== DisconnectReason.badSession;
-
-          console.log({
-            event: 'Connection closed',
-            reason: lastDisconnect.error.message,
-            shouldReconnect,
-          });
-
-          if (shouldReconnect) {
-            console.log('Reconnecting in 5 seconds...');
-            await delay(5000);
-            connectToWhatsApp();
+            if (shouldReconnect) {
+              await delay(5000);
+              connectToWhatsApp();
+            }
           }
-        }
-      } else if (connection === 'open') {
-        // Koneksi berhasil
-        console.log({ event: 'Connection opened' });
-        isLoggedIn = true; // Set status login ke true
+          break;
 
-        clearInterval(presenceInterval); // Hapus interval sebelumnya jika ada
-        presenceInterval = setInterval(() => {
-          if (isLoggedIn) {
-            sock.sendPresenceUpdate('unavailable'); // Kirim presence update
-          }
-        }, 3000);
+        case 'open':
+          console.log({ event: 'Connection opened' });
+          clearInterval(presenceInterval);
+          presenceInterval = setInterval(() => {
+            sock.sendPresenceUpdate('unavailable');
+          }, 3000);
+          break;
       }
     });
 
-    // Binding auth state ke event
+    // Binding store ke event
+    store.bind(sock.ev);
     sock.ev.on('creds.update', saveCreds);
 
-    // Mendengarkan event messages.upsert dan menampilkan pesan masuk
-    sock.ev.on('messages.upsert', ({ messages }) => {
-      console.log('Got messages:', messages);
-      for (const m of messages) {
-        if (!m.message || !m.key || !m.key.remoteJid) continue;
-        // Tangani pesan masuk
-        handleMessage(sock, m);
-      }
-    });
   } catch (error) {
     console.error({ event: 'Connection error', error: error.toString() });
-    clearInterval(presenceInterval); // Hentikan interval jika ada error
+    clearInterval(presenceInterval); // Pastikan interval selalu dibersihkan
   }
 }
 
-// Fungsi untuk menangani pesan masuk
-async function handleMessage(sock, message) {
-  try {
-    // Tangani pesan masuk
-    if (message.message && message.message.conversation) {
-      const msgText = message.message.conversation.trim().toLowerCase();
-
-      if (msgText === 'ping') {
-        console.log('Received "Ping", sending "Pong"...');
-        // Mengirimkan balasan "Pong" ke pengirim pesan
-        await sock.sendMessage(message.key.remoteJid, { text: 'Pong' });
-      }
-    }
-  } catch (error) {
-    console.error('Error handling message:', error);
-  }
-}
-
-// Memulai koneksi ke WhatsApp
+// Memulai koneksi WhatsApp
 connectToWhatsApp();
