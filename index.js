@@ -1,4 +1,3 @@
-// Impor dependency yang diperlukan
 const { makeWASocket, DisconnectReason } = require('@whiskeysockets/baileys');
 const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { setInterval, clearInterval } = require('timers');
@@ -22,9 +21,11 @@ async function handleMessage(sock, message) {
 
   if (message.message.conversation) {
     const text = message.message.conversation.toLowerCase();
+    console.log(`Received message: ${text}`); // Log pesan yang diterima
 
     if (text === 'ping') {
       await sock.sendMessage(jid, { text: 'pong' });
+      console.log(`Sent response: pong`); // Log pesan yang dikirim
     } else {
       console.log('Pesan lain:', message.message.conversation);
     }
