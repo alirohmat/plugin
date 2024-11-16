@@ -74,7 +74,9 @@ async function connectToWhatsApp() {
 
             if (lastDisconnect.error?.output?.statusCode === DisconnectReason.loggedOut) {
               console.log('Logged out. QR should be printed.');
-              await connectToWhatsApp(); // Mulai ulang untuk mencetak QR
+              // Memastikan QR dicetak lagi jika logout
+              await delay(1000); // Tunggu sebentar sebelum memulai ulang koneksi
+              connectToWhatsApp(); // Mulai ulang untuk mencetak QR
             } else if (shouldReconnect) {
               console.log('Reconnecting...');
               await delay(5000);
