@@ -53,7 +53,7 @@ export default (handler) => {
                                 { role: 'system', content: 'Kamu bertugas membuat ringkasan dari konten yang diberikan' },
                                 { role: 'user', content: `Hasil Ekstraksi:\n\n${content}` }
                             ],
-                            model: 'llama-3.2-90b-text-preview',
+                            model: 'llama-3.2-90b-vision-preview',
                             temperature: 1,
                             max_tokens: 1024,
                             top_p: 1,
