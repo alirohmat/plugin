@@ -1,6 +1,6 @@
 proxies:
 - name: 6 🇸🇬 Amazon.com WS TLS [trojan]
-  server: trojan.dumb.biz.id
+  server: quiz.skillacademy.com
   port: 443
   type: trojan
   password: 68826aa6-1da1-4269-ab48-a172de94255d
