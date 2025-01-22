@@ -1,0 +1,132 @@
+proxies:
+- name: "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
+  type: trojan
+  server: business.udemy.com
+  port: 443
+  udp: true
+  alpn:
+  - h2
+  skip-cert-verify: false
+  password: c65beabc-21a9-4df3-ba62-07940d6af5a9
+  sni: sg.siap.biz.id
+  network: ws
+  ws-opts:
+    path: /tpghSzyflcx4hYsVJxhNTpQ
+    headers:
+      Host: sg.siap.biz.id
+- name: "sg.siap.biz.id tls_h2 grpc direct trojan \xA7 443 3"
+  type: trojan
+  server: community.udemy.com
+  port: 443
+  udp: true
+  alpn:
+  - h2
+  skip-cert-verify: false
+  password: c65beabc-21a9-4df3-ba62-07940d6af5a9
+  sni: sg.siap.biz.id
+  network: grpc
+  grpc-opts:
+    grpc-service-name: tpghSzyflcBWso9sc
+- name: "sg.siap.biz.id tls WS direct trojan \xA7 443 3"
+  type: trojan
+  server: engineering.udemy.com
+  port: 443
+  udp: true
+  alpn:
+  - http/1.1
+  skip-cert-verify: false
+  password: c65beabc-21a9-4df3-ba62-07940d6af5a9
+  sni: sg.siap.biz.id
+  network: ws
+  ws-opts:
+    path: /tpghSzyflcx4hYsVJxhNTpQ
+    headers:
+      Host: sg.siap.biz.id
+- name: "sg.siap.biz.id tls WS direct vmess \xA7 443 3"
+  type: vmess
+  server: equity.udemy.com
+  port: 443
+  udp: true
+  alpn:
+  - http/1.1
+  skip-cert-verify: false
+  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
+  servername: sg.siap.biz.id
+  tls: true
+  packet-encoding: xudp
+  alterId: 0
+  cipher: auto
+  network: ws
+  ws-opts:
+    path: /OAQSP95jDx4hYsVJxhNTpQ
+    headers:
+      Host: sg.siap.biz.id
+- name: "sg.siap.biz.id tls grpc direct trojan \xA7 443 3"
+  type: trojan
+  server: blog.skillacademy.com
+  port: 443
+  udp: true
+  alpn:
+  - h2
+  skip-cert-verify: false
+  password: c65beabc-21a9-4df3-ba62-07940d6af5a9
+  sni: sg.siap.biz.id
+  network: grpc
+  grpc-opts:
+    grpc-service-name: tpghSzyflcBWso9sc
+- name: "sg.siap.biz.id tls grpc direct vmess \xA7 443 3"
+  type: vmess
+  server: enterprise.skillacademy.com
+  port: 443
+  udp: true
+  alpn:
+  - h2
+  skip-cert-verify: false
+  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
+  servername: sg.siap.biz.id
+  tls: true
+  packet-encoding: xudp
+  alterId: 0
+  cipher: auto
+  network: grpc
+  grpc-opts:
+    grpc-service-name: OAQSP95jDBWso9sc
+- name: "sg.siap.biz.id http WS direct vmess \xA7 80 3"
+  type: vmess
+  server: event.skillacademy.com
+  port: 80
+  udp: true
+  alpn:
+  - http/1.1
+  skip-cert-verify: false
+  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
+  servername: sg.siap.biz.id
+  tls: false
+  packet-encoding: xudp
+  alterId: 0
+  cipher: auto
+  network: ws
+  ws-opts:
+    path: /OAQSP95jDx4hYsVJxhNTpQ
+    headers:
+      Host: sg.siap.biz.id
+- name: "sg.siap.biz.id http tcp direct vmess \xA7 80 3"
+  type: vmess
+  server: kampusmerdeka.skillacademy.com
+  port: 80
+  udp: true
+  alpn:
+  - http/1.1
+  skip-cert-verify: false
+  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
+  servername: sg.siap.biz.id
+  tls: false
+  packet-encoding: xudp
+  alterId: 0
+  cipher: auto
+  network: http
+  http-opts:
+    path:
+    - /OAQSP95jDCXkdCC9
+    host:
+    - sg.siap.biz.id
