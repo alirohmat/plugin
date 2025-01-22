@@ -1,4 +1,17 @@
 proxies:
+  - name: 6 🇸🇬 Amazon.com WS TLS [trojan]
+    server: trojan.dumb.biz.id
+    port: 443
+    type: trojan
+    password: 68826aa6-1da1-4269-ab48-a172de94255d
+    udp: true
+    skip-cert-verify: true
+    network: ws
+    sni: trojan.dumb.biz.id
+    ws-opts:
+      path: /54.169.229.188-443
+      headers:
+        Host: trojan.dumb.biz.id
 - name: "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
   type: trojan
   server: business.udemy.com
