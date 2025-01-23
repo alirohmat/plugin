@@ -1,0 +1,72 @@
+allow-lan: true
+tun:
+  enable: false
+
+dns:
+  enable: true
+  ipv6: false
+  default-nameserver:
+    - 8.8.8.8
+    - 1.1.1.1
+  listen: 0.0.0.0:1053
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - '*.lan'
+    - '*.local'
+  nameserver:
+    - 8.8.8.8
+    - 1.0.0.1
+
+proxies:
+  - name: Proxy1
+    type: vmess
+    server: example.com
+    port: 443
+    uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    cipher: auto
+
+proxy-groups:
+  - name: INTERNET-UMUM 🌏
+    type: select
+    proxies:
+      - BALANCE
+      - FALLBACK
+      - BESTPING
+
+  - name: BALANCE
+    type: load-balance
+    strategy: round-robin
+    proxies:
+      - Proxy1
+
+  - name: FALLBACK
+    type: fallback
+    proxies:
+      - Proxy1
+
+  - name: BESTPING
+    type: url-test
+    proxies:
+      - Proxy1
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+proxy-providers:
+  GIT:
+    type: http
+    url: "https://raw.githubusercontent.com/alirohmat/plugin/refs/heads/main/AKUN-VPN.yaml"
+    path: "./proxy_provider/AKUN-VPN.yaml"
+    interval: 300
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 300
+
+rules:
+  - MATCH,GLOBAL
+
+external-controller: 0.0.0.0:9090
+external-ui: ./dashboard
+tproxy-port: 9898
+redir-port: 9797
