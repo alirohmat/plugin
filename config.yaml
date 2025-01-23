@@ -18,14 +18,6 @@ dns:
     - 8.8.8.8
     - 1.0.0.1
 
-proxies:
-  - name: Proxy1
-    type: vmess
-    server: example.com
-    port: 443
-    uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    cipher: auto
-
 proxy-groups:
   - name: INTERNET-UMUM 🌏
     type: select
@@ -37,18 +29,18 @@ proxy-groups:
   - name: BALANCE
     type: load-balance
     strategy: round-robin
-    proxies:
-      - Proxy1
+    use:
+      - GIT
 
   - name: FALLBACK
     type: fallback
-    proxies:
-      - Proxy1
+    use:
+      - GIT
 
   - name: BESTPING
     type: url-test
-    proxies:
-      - Proxy1
+    use:
+      - GIT
     url: http://www.gstatic.com/generate_204
     interval: 300
 
