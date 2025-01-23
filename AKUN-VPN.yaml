@@ -1,6 +1,6 @@
 proxies:
 - name: 113 Amazon.com WS TLS [trojan]
-  server: io.ruangguru.com
+  server: teach.udemy.com
   port: 443
   type: trojan
   password: b07480fa-75b4-4fcf-9bb9-0960489c8438
