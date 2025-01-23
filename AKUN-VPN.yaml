@@ -1,17 +1,4 @@
 proxies:
-- name: 113 Amazon.com WS TLS [trojan]
-  server: teach.udemy.com
-  port: 443
-  type: trojan
-  password: b07480fa-75b4-4fcf-9bb9-0960489c8438
-  skip-cert-verify: true
-  sni: trojan.dumb.biz.id
-  network: ws
-  ws-opts:
-    path: /13.250.14.76-443
-    headers:
-      Host: trojan.dumb.biz.id
-    udp: true
 - name: "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
   type: trojan
   server: business.udemy.com
