@@ -1,490 +1,87 @@
-mixed-port: 7890
-allow-lan: false
-log-level: info
-secret: 
-external-controller: 127.0.0.1:9090
-# ipv6: false
-ipv6: true
-
-#global-client-fingerprint: chrome
-
+port: 7890
+socks-port: 7891
+redir-port: 7892
+allow-lan: true
 mode: rule
-dns:
-  enable: true
-  use-hosts: true
-  # ipv6: false
-  enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.1/16
-  listen: 127.0.0.1:6868
+log-level: info
+external-controller: 127.0.0.1:9090
+secret: ""
 
-  prefer-h3: true #Enable DoH support for HTTP/3,
+proxies:
+  - name: "sg.siap.biz.id tls_h2 WS direct vless"
+    type: vless
+    server: quiz.staging.vidio.com
+    port: 443
+    uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
+    cipher: none
+    tls: true
+    network: ws
+    ws-opts:
+      path: "/ZiM3Vrvcyux4hYsVJxhNTpQ"
+      headers:
+        Host: sg.siap.biz.id
+    servername: sg.siap.biz.id
+    alpn:
+      - h2
+    fingerprint: chrome
 
-  fake-ip-filter:
-     - "sg.siap.biz.id"
-     - "www.unwomen.org"
-  default-nameserver:
-    - 1.1.1.1
-    - 8.8.8.8
-    - 1.0.0.1
-  nameserver:
-#    - https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/dns/dns-query
+  - name: "sg.siap.biz.id TLS GRPC Direct VLESS"
+    type: vless
+    server: support.vidio.com
+    port: 443
+    uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
+    cipher: none
+    tls: true
+    network: grpc
+    grpc-opts:
+      grpc-service-name: "ZiM3VrvcyuBWso9sc"
+    servername: sg.siap.biz.id
+    alpn:
+      - h2
+    fingerprint: chrome
 
-    - https://8.8.8.8/dns-query#h3=true
-    - https://1.1.1.1/dns-query#PROXY
-    - https://8.8.8.8/dns-query#PROXY
-    - https://1.0.0.1/dns-query#PROXY
-    #- https://8.8.8.8/dns-query#PROXY&h3=true
-    
+  - name: "sg-cdn.siap.biz.id TLS H2 GRPC CDN VLESS"
+    type: vless
+    server: quiz.staging.vidio.com
+    port: 443
+    uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
+    cipher: none
+    tls: true
+    network: grpc
+    grpc-opts:
+      grpc-service-name: "ZiM3VrvcyuBWso9sc"
+    servername: sg-cdn.siap.biz.id
+    alpn:
+      - h2
+    fingerprint: chrome
 
-    - 8.8.8.8
-    - 1.1.1.1
-profile:
-  # Storing select records
-  store-selected: true
+  - name: "6 Google Cloud WS TLS [trojan]"
+    type: trojan
+    server: akunprakerja.skillacademy.com
+    port: 443
+    password: fee884f2-fe20-4c63-8226-717608c56712
+    network: ws
+    tls: true
+    ws-opts:
+      path: "/35.219.50.99-443"
+      headers:
+        Host: trojan.dumb.biz.id
+    sni: trojan.dumb.biz.id
 
 proxy-groups:
-  - name: PROXY
+  - name: "Load Balance"
+    type: load-balance
     proxies:
-      - automatic
-      - sequential 
-      - "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls_h2 grpc direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls WS direct vless \xA7 443 3"
-      - "sg.siap.biz.id tls WS direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls WS direct vmess \xA7 443 3"
-      - "sg.siap.biz.id tls grpc direct vless \xA7 443 3"
-      - "sg.siap.biz.id tls grpc direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls grpc direct vmess \xA7 443 3"
-      - "sg.siap.biz.id http WS direct vless \xA7 80 3"
-      - "sg.siap.biz.id http WS direct vmess \xA7 80 3"
-      - "sg.siap.biz.id http tcp direct vmess \xA7 80 3"
-      - "sg.siap.biz.id SSH \xA7 20294 3"
-      - "sg.siap.biz.id WireGuard \xA7 51622 3"
-      - "sg.siap.biz.id TUIC \xA7 21996 3"
-      - "sg.siap.biz.id Hysteria2 \xA7 43642 3"
-
-      
-    # use:
-    #   %for phttp in hconfigs[ConfigEnum.http_ports].split(',')
-    #   - all_proxies_
-    #   %endfor
-    #   %for ptls in hconfigs[ConfigEnum.tls_ports].split(',')
-    #   - all_proxies_
-    #   %endfor
-    type: select
-
-
-  
-
-  
-
-
-
-  - name: automatic
-    type: fallback
-    url: "http://cp.cloudflare.com"
+      - "sg.siap.biz.id tls_h2 WS direct vless"
+      - "sg.siap.biz.id TLS GRPC Direct VLESS"
+      - "sg-cdn.siap.biz.id TLS H2 GRPC CDN VLESS"
+      - "6 Google Cloud WS TLS [trojan]"
+    url: http://www.gstatic.com/generate_204
     interval: 300
-    proxies:
-        # - "load-balance"
-        - auto
-        - sequential
-        - REJECT
-    lazy: true
-
-
-
-
-  - name: sequential
-    type: fallback
-    url: "http://cp.cloudflare.com"
-    interval: 300
-    proxies:
-      - "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls_h2 grpc direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls WS direct vless \xA7 443 3"
-      - "sg.siap.biz.id tls WS direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls WS direct vmess \xA7 443 3"
-      - "sg.siap.biz.id tls grpc direct vless \xA7 443 3"
-      - "sg.siap.biz.id tls grpc direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls grpc direct vmess \xA7 443 3"
-      - "sg.siap.biz.id http WS direct vless \xA7 80 3"
-      - "sg.siap.biz.id http WS direct vmess \xA7 80 3"
-      - "sg.siap.biz.id http tcp direct vmess \xA7 80 3"
-      - "sg.siap.biz.id SSH \xA7 20294 3"
-      - "sg.siap.biz.id WireGuard \xA7 51622 3"
-      - "sg.siap.biz.id TUIC \xA7 21996 3"
-      - "sg.siap.biz.id Hysteria2 \xA7 43642 3"
-
-    # use:
-    #   %for phttp in hconfigs[ConfigEnum.http_ports].split(',')
-    #   - all_proxies_
-    #   %endfor
-    #   %for ptls in hconfigs[ConfigEnum.tls_ports].split(',')
-    #   - all_proxies_
-    #   %endfor
-
-  - name: auto
-    proxies:
-      - "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls_h2 grpc direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls WS direct vless \xA7 443 3"
-      - "sg.siap.biz.id tls WS direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls WS direct vmess \xA7 443 3"
-      - "sg.siap.biz.id tls grpc direct vless \xA7 443 3"
-      - "sg.siap.biz.id tls grpc direct trojan \xA7 443 3"
-      - "sg.siap.biz.id tls grpc direct vmess \xA7 443 3"
-      - "sg.siap.biz.id http WS direct vless \xA7 80 3"
-      - "sg.siap.biz.id http WS direct vmess \xA7 80 3"
-      - "sg.siap.biz.id http tcp direct vmess \xA7 80 3"
-      - "sg.siap.biz.id SSH \xA7 20294 3"
-      - "sg.siap.biz.id WireGuard \xA7 51622 3"
-      - "sg.siap.biz.id TUIC \xA7 21996 3"
-      - "sg.siap.biz.id Hysteria2 \xA7 43642 3"
-
-    # use:
-    #   %for phttp in hconfigs[ConfigEnum.http_ports].split(',')
-    #   - all_proxies_
-    #   %endfor
-    #   %for ptls in hconfigs[ConfigEnum.tls_ports].split(',')
-    #   - all_proxies_
-    #   %endfor
-
-    type: url-test
-    url: http://cp.cloudflare.com
-    interval: 300
-    tolerance: 150
-    lazy: true
-
-
-     
-proxies:
-- name: "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
-  type: trojan
-  server: sg.siap.biz.id
-  port: 443
-  udp: true
-  alpn:
-  - h2
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  password: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  sni: sg.siap.biz.id
-  network: ws
-  ws-opts:
-    path: /tpghSzyflcx4hYsVJxhNTpQ
-    headers:
-      Host: sg.siap.biz.id
-- name: "sg.siap.biz.id tls_h2 grpc direct trojan \xA7 443 3"
-  type: trojan
-  server: sg.siap.biz.id
-  port: 443
-  udp: true
-  alpn:
-  - h2
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  password: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  sni: sg.siap.biz.id
-  network: grpc
-  grpc-opts:
-    grpc-service-name: tpghSzyflcBWso9sc
-- name: "sg.siap.biz.id tls WS direct vless \xA7 443 3"
-  type: vless
-  server: sg.siap.biz.id
-  port: 443
-  udp: true
-  alpn:
-  - http/1.1
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  servername: sg.siap.biz.id
-  tls: true
-  packet-encoding: xudp
-  network: ws
-  ws-opts:
-    path: /ZiM3Vrvcyux4hYsVJxhNTpQ
-    headers:
-      Host: sg.siap.biz.id
-- name: "sg.siap.biz.id tls WS direct trojan \xA7 443 3"
-  type: trojan
-  server: sg.siap.biz.id
-  port: 443
-  udp: true
-  alpn:
-  - http/1.1
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  password: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  sni: sg.siap.biz.id
-  network: ws
-  ws-opts:
-    path: /tpghSzyflcx4hYsVJxhNTpQ
-    headers:
-      Host: sg.siap.biz.id
-- name: "sg.siap.biz.id tls WS direct vmess \xA7 443 3"
-  type: vmess
-  server: sg.siap.biz.id
-  port: 443
-  udp: true
-  alpn:
-  - http/1.1
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  servername: sg.siap.biz.id
-  tls: true
-  packet-encoding: xudp
-  alterId: 0
-  cipher: auto
-  network: ws
-  ws-opts:
-    path: /OAQSP95jDx4hYsVJxhNTpQ
-    headers:
-      Host: sg.siap.biz.id
-- name: "sg.siap.biz.id tls grpc direct vless \xA7 443 3"
-  type: vless
-  server: sg.siap.biz.id
-  port: 443
-  udp: true
-  alpn:
-  - h2
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  servername: sg.siap.biz.id
-  tls: true
-  packet-encoding: xudp
-  network: grpc
-  grpc-opts:
-    grpc-service-name: ZiM3VrvcyuBWso9sc
-- name: "sg.siap.biz.id tls grpc direct trojan \xA7 443 3"
-  type: trojan
-  server: sg.siap.biz.id
-  port: 443
-  udp: true
-  alpn:
-  - h2
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  password: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  sni: sg.siap.biz.id
-  network: grpc
-  grpc-opts:
-    grpc-service-name: tpghSzyflcBWso9sc
-- name: "sg.siap.biz.id tls grpc direct vmess \xA7 443 3"
-  type: vmess
-  server: sg.siap.biz.id
-  port: 443
-  udp: true
-  alpn:
-  - h2
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  servername: sg.siap.biz.id
-  tls: true
-  packet-encoding: xudp
-  alterId: 0
-  cipher: auto
-  network: grpc
-  grpc-opts:
-    grpc-service-name: OAQSP95jDBWso9sc
-- name: "sg.siap.biz.id http WS direct vless \xA7 80 3"
-  type: vless
-  server: sg.siap.biz.id
-  port: 80
-  udp: true
-  alpn:
-  - http/1.1
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  servername: sg.siap.biz.id
-  tls: false
-  packet-encoding: xudp
-  network: ws
-  ws-opts:
-    path: /ZiM3Vrvcyux4hYsVJxhNTpQ
-    headers:
-      Host: sg.siap.biz.id
-- name: "sg.siap.biz.id http WS direct vmess \xA7 80 3"
-  type: vmess
-  server: sg.siap.biz.id
-  port: 80
-  udp: true
-  alpn:
-  - http/1.1
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  servername: sg.siap.biz.id
-  tls: false
-  packet-encoding: xudp
-  alterId: 0
-  cipher: auto
-  network: ws
-  ws-opts:
-    path: /OAQSP95jDx4hYsVJxhNTpQ
-    headers:
-      Host: sg.siap.biz.id
-- name: "sg.siap.biz.id http tcp direct vmess \xA7 80 3"
-  type: vmess
-  server: sg.siap.biz.id
-  port: 80
-  udp: true
-  alpn:
-  - http/1.1
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  servername: sg.siap.biz.id
-  tls: false
-  packet-encoding: xudp
-  alterId: 0
-  cipher: auto
-  network: http
-  http-opts:
-    path:
-    - /OAQSP95jDCXkdCC9
-    host:
-    - sg.siap.biz.id
-- name: "sg.siap.biz.id SSH \xA7 20294 3"
-  type: ssh
-  server: sg.siap.biz.id
-  port: '20294'
-  username: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  private-key: '-----BEGIN OPENSSH PRIVATE KEY-----
-
-    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZWQyNTUx
-
-    OQAAACBgvMuERlgCdNCu5kC/hUE/UUCPnLMWkMGcXJA47ktufwAAAIhrM5ZWazOWVgAAAAtzc2gt
-
-    ZWQyNTUxOQAAACBgvMuERlgCdNCu5kC/hUE/UUCPnLMWkMGcXJA47ktufwAAAECqoBHARgYjfDdz
-
-    oWwqZZpPLM4AS4Z1OxMD79H84PuvI2C8y4RGWAJ00K7mQL+FQT9RQI+csxaQwZxckDjuS25/AAAA
-
-    AAECAwQF
-
-    -----END OPENSSH PRIVATE KEY-----
-
-    '
-  host-key:
-  - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC8PX+SLD/sdH9oB77doF3q2HCLUxVWSu4twbLVB/Wti
-    hiddify-panel@v2ray.siap.biz.id
-
-    '
-  - 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPnkQcMePlFCWOwZZBvclLc72HjVBIVdJz6K7qHNiYCw2kkndy1f5V43X/v30kOrHzDpDr/OcvTHTMiMjFBtwVs=
-    hiddify-panel@v2ray.siap.biz.id
-
-    '
-  - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDHpDoqL/m9h/WXpSN/ISJY2254EuwCt19DoeVndi8c+NAHkIsisMzET7/K20u1vnFae74xJpLXebbnAycA8JR+o1fcbeLKXIBtMnZm6n8dasv+5zzBmRLWNEGEXxAeKPARG49D6awYKZ5FsrWFO+rEAx0pDmf8hgdcsDgP20Hqw5fUt9IOwtVkjPySROT6YX+MyuFfkukI5QeSyp5SBfP3eZaZINBC2/8bKuMxQdL51GTQ44X5yYa1FNAMiWWwiL7NX9sKACLMPwGrd6pUxS8q9bY8gNgQu/cKDBvTpmJsPtNmI3EbNAj7eTPc3ha3JP5zZSDIfOTn5vbpKOvEIpKPyhkIHVv8GhJbvrkG3nn4wjUVUvDczLLetIl8GX+adoGBnfuk+4EfgBxLPo+KZNQTZk5zPmG2gTvhwNVjCfRx7IdbixcPxytWvuez7JO8ELn5jW8nC0NghxLXcrJs0Jt1G5ZiIuFwFUuUWvOJ6KmE+i3mtwcDScxBBUJs1ypumsU=
-    hiddify-panel@v2ray.siap.biz.id
-
-    '
-- name: "sg.siap.biz.id WireGuard \xA7 51622 3"
-  type: wireguard
-  server: sg.siap.biz.id
-  port: '51622'
-  udp: true
-  private-key: QDIYTH1ksrAjIDSUTgzS97XkO+Skx31GOoqRq9pgK3w=
-  ip: 10.90.0.3/32
-  public-key: CImFJ8hUBTD1y6GquhYR0nh43j2Ml2jrkbqxvyRrNyg=
-  pre-shared-key: MNsWKIVweewHLvZaCAmq09aoTAiCrLF6dnJG6wfzpI8=
-- name: "sg.siap.biz.id TUIC \xA7 21996 3"
-  type: tuic
-  server: sg.siap.biz.id
-  port: 21996
-  udp: true
-  udp-relay-mode: native
-  reduce-rtt: true
-  skip-cert-verify: false
-  sni: sg.siap.biz.id
-  password: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
-- name: "sg.siap.biz.id Hysteria2 \xA7 43642 3"
-  type: hysteria2
-  server: sg.siap.biz.id
-  port: 43642
-  udp: true
-  alpn:
-  - h3
-  skip-cert-verify: false
-  client-fingerprint: chrome
-  password: c65beabc-21a9-4df3-ba62-07940d6af5a9
-  obfs: salamander
-  obfs-password: k44iTDusLYbMIIkL5vO0OiCuLIaj
-
-
-# proxy-providers:
-#   %for t in (['http','tls'] if hconfigs[ConfigEnum.http_proxy_enable] else ['tls'])
-#   %for port in hconfigs[ConfigEnum.http_ports if t=='http' else ConfigEnum.tls_ports].split(',')
-#   %set phttp=port if t=='http' else None
-#   %set ptls=port if t=='tls' else None
-#   all_proxies_:
-#     type: http
-#     url: "https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/c65beabc-21a9-4df3-ba62-07940d6af5a9/clash/meta/proxies.yml?mode=None&ptls=&phttp=&455387"
-#     # path: sg.siap.biz.id/c65beabc-21a9-4df3-ba62-07940d6af5a9-meta---proxies455387.yaml
-#     path: sg.siap.biz.id/--455387.yaml
-#     health-check:
-#       enable: true
-#       interval: 600
-#       url: http://www.gstatic.com/generate_204    
-#   %endfor
-#   %endfor
-rule-providers:
-
-  blocked:
-    type: http
-    behavior: classical
-    url: "https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/clash/rules/blocked-sites.yml"
-    path: ./ruleset/blocked.yaml
-    interval: 432000
-
-  tmpblocked:
-    type: http
-    behavior: classical
-    url: "https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/clash/rules/tmp-blocked-sites.yml"
-    path: ./ruleset/tmpblocked.yaml
-    interval: 432000
-
-  open:
-    type: http
-    behavior: classical
-    url: "https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/clash/rules/open-sites.yml"
-    path: ./ruleset/open.yaml
-    interval: 432000    
-
-  # ads:
-  #   type: http
-  #   behavior: classical
-  #   url: "https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/clash/rules/ads-sites.yml"
-  #   path: ./ruleset/ads.yaml
-  #   interval: 432000   
+    strategy: round-robin
 
 rules:
-  - DOMAIN,www.unwomen.org,DIRECT
-  # - DOMAIN,sg.siap.biz.id,DIRECT
-  # - DOMAIN,,DIRECT
-  # - IP-CIDR,/32,DIRECT
-  - IP-CIDR,10.10.34.0/24,PROXY
-  - RULE-SET,tmpblocked,PROXY
-  - RULE-SET,blocked,PROXY
-  # - IP-CIDR,10.10.34.0/24,REJECT
-  # - RULE-SET,tmpblocked,REJECT
-  # - RULE-SET,blocked,REJECT
-  - GEOIP,IR,DIRECT
-  - DOMAIN-SUFFIX,.ir,DIRECT
-  - RULE-SET,open,DIRECT
-  # - RULE-SET,ads,REJECT
-  - MATCH,PROXY
-
-
-tun:
-  enable: true
-  stack: system # or gvisor
-  dns-hijack:
-    - any:53
-  auto-redir: true
-  auto-route: true
-  auto-detect-interface: true
+  - DOMAIN-SUFFIX,google.com,Load Balance
+  - DOMAIN-SUFFIX,youtube.com,Load Balance
+  - GEOIP,US,Load Balance
+  - MATCH,Load Balance
