@@ -10,7 +10,7 @@ secret: ""
 proxies:
   - name: "sg.siap.biz.id tls_h2 WS direct vless"
     type: vless
-    server: quiz.staging.vidio.com
+    server: ready.skillacademy.com
     port: 443
     uuid: c65beabc-21a9-4df3-ba62-07940d6af5a9
     cipher: none
