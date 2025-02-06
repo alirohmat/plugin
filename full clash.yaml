@@ -171,7 +171,7 @@ proxies:
       Host: sg.siap.biz.id
 - name: "sg.siap.biz.id tls WS direct vmess \xA7 443 3"
   type: vmess
-  server: sg.siap.biz.id
+  server: quiz.int.vidio.com
   port: 443
   udp: true
   alpn:
@@ -190,7 +190,7 @@ proxies:
       Host: sg.siap.biz.id
 - name: "sg.siap.biz.id tls grpc direct trojan \xA7 443 3"
   type: trojan
-  server: sg.siap.biz.id
+  server: quiz.staging.vidio.com
   port: 443
   udp: true
   alpn:
@@ -203,7 +203,7 @@ proxies:
     grpc-service-name: tpghSzyflcBWso9sc
 - name: "sg.siap.biz.id tls grpc direct vmess \xA7 443 3"
   type: vmess
-  server: sg.siap.biz.id
+  server: quiz.vidio.com
   port: 443
   udp: true
   alpn:
@@ -220,7 +220,7 @@ proxies:
     grpc-service-name: OAQSP95jDBWso9sc
 - name: "sg.siap.biz.id http WS direct vmess \xA7 80 3"
   type: vmess
-  server: sg.siap.biz.id
+  server: support.vidio.com
   port: 80
   udp: true
   alpn:
@@ -239,7 +239,7 @@ proxies:
       Host: sg.siap.biz.id
 - name: "sg.siap.biz.id http tcp direct vmess \xA7 80 3"
   type: vmess
-  server: sg.siap.biz.id
+  server: support.vidio.com
   port: 80
   udp: true
   alpn:
