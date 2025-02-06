@@ -1,1 +1,333 @@
+mixed-port: 7890
+allow-lan: true
+log-level: info
+secret: 
+external-controller: 127.0.0.1:9090
+# ipv6: false
+ipv6: false
 
+mode: rule
+dns:
+  enable: true
+  use-hosts: true
+  # ipv6: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  listen: 127.0.0.1:6868
+
+  fake-ip-filter:
+     - "sg.siap.biz.id"
+     - "www.unwomen.org"
+  default-nameserver:
+    - 1.1.1.1
+    - 8.8.8.8
+    - 1.0.0.1
+  nameserver:
+#    - https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/dns/dns-query
+
+    - 8.8.8.8
+    - 1.1.1.1
+profile:
+  # Storing select records
+  store-selected: true
+
+proxy-groups:
+  - name: PROXY
+    proxies:
+      - automatic
+      - sequential 
+      - "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls_h2 grpc direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls WS direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls WS direct vmess \xA7 443 3"
+      - "sg.siap.biz.id tls grpc direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls grpc direct vmess \xA7 443 3"
+      - "sg.siap.biz.id http WS direct vmess \xA7 80 3"
+      - "sg.siap.biz.id http tcp direct vmess \xA7 80 3"
+
+      
+    # use:
+    #   %for phttp in hconfigs[ConfigEnum.http_ports].split(',')
+    #   - all_proxies_
+    #   %endfor
+    #   %for ptls in hconfigs[ConfigEnum.tls_ports].split(',')
+    #   - all_proxies_
+    #   %endfor
+    type: select
+
+
+  
+
+  
+
+
+
+  - name: automatic
+    type: fallback
+    url: "http://cp.cloudflare.com"
+    interval: 300
+    proxies:
+        # - "load-balance"
+        - auto
+        - sequential
+        - REJECT
+    lazy: true
+
+
+
+
+  - name: sequential
+    type: fallback
+    url: "http://cp.cloudflare.com"
+    interval: 300
+    proxies:
+      - "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls_h2 grpc direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls WS direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls WS direct vmess \xA7 443 3"
+      - "sg.siap.biz.id tls grpc direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls grpc direct vmess \xA7 443 3"
+      - "sg.siap.biz.id http WS direct vmess \xA7 80 3"
+      - "sg.siap.biz.id http tcp direct vmess \xA7 80 3"
+
+    # use:
+    #   %for phttp in hconfigs[ConfigEnum.http_ports].split(',')
+    #   - all_proxies_
+    #   %endfor
+    #   %for ptls in hconfigs[ConfigEnum.tls_ports].split(',')
+    #   - all_proxies_
+    #   %endfor
+
+  - name: auto
+    proxies:
+      - "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls_h2 grpc direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls WS direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls WS direct vmess \xA7 443 3"
+      - "sg.siap.biz.id tls grpc direct trojan \xA7 443 3"
+      - "sg.siap.biz.id tls grpc direct vmess \xA7 443 3"
+      - "sg.siap.biz.id http WS direct vmess \xA7 80 3"
+      - "sg.siap.biz.id http tcp direct vmess \xA7 80 3"
+
+    # use:
+    #   %for phttp in hconfigs[ConfigEnum.http_ports].split(',')
+    #   - all_proxies_
+    #   %endfor
+    #   %for ptls in hconfigs[ConfigEnum.tls_ports].split(',')
+    #   - all_proxies_
+    #   %endfor
+
+    type: url-test
+    url: http://cp.cloudflare.com
+    interval: 300
+    tolerance: 150
+    lazy: true
+
+
+     
+proxies:
+- name: "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
+  type: trojan
+  server: sg.siap.biz.id
+  port: 443
+  udp: true
+  alpn:
+  - h2
+  skip-cert-verify: false
+  password: 56b3754c-9dfa-496c-bd1b-8ab02dc5699b
+  sni: sg.siap.biz.id
+  network: ws
+  ws-opts:
+    path: /tpghSzyflcx4hYsVJxhNTpQ
+    headers:
+      Host: sg.siap.biz.id
+- name: "sg.siap.biz.id tls_h2 grpc direct trojan \xA7 443 3"
+  type: trojan
+  server: sg.siap.biz.id
+  port: 443
+  udp: true
+  alpn:
+  - h2
+  skip-cert-verify: false
+  password: 56b3754c-9dfa-496c-bd1b-8ab02dc5699b
+  sni: sg.siap.biz.id
+  network: grpc
+  grpc-opts:
+    grpc-service-name: tpghSzyflcBWso9sc
+- name: "sg.siap.biz.id tls WS direct trojan \xA7 443 3"
+  type: trojan
+  server: sg.siap.biz.id
+  port: 443
+  udp: true
+  alpn:
+  - http/1.1
+  skip-cert-verify: false
+  password: 56b3754c-9dfa-496c-bd1b-8ab02dc5699b
+  sni: sg.siap.biz.id
+  network: ws
+  ws-opts:
+    path: /tpghSzyflcx4hYsVJxhNTpQ
+    headers:
+      Host: sg.siap.biz.id
+- name: "sg.siap.biz.id tls WS direct vmess \xA7 443 3"
+  type: vmess
+  server: sg.siap.biz.id
+  port: 443
+  udp: true
+  alpn:
+  - http/1.1
+  skip-cert-verify: false
+  uuid: 56b3754c-9dfa-496c-bd1b-8ab02dc5699b
+  servername: sg.siap.biz.id
+  tls: true
+  packet-encoding: xudp
+  alterId: 0
+  cipher: auto
+  network: ws
+  ws-opts:
+    path: /OAQSP95jDx4hYsVJxhNTpQ
+    headers:
+      Host: sg.siap.biz.id
+- name: "sg.siap.biz.id tls grpc direct trojan \xA7 443 3"
+  type: trojan
+  server: sg.siap.biz.id
+  port: 443
+  udp: true
+  alpn:
+  - h2
+  skip-cert-verify: false
+  password: 56b3754c-9dfa-496c-bd1b-8ab02dc5699b
+  sni: sg.siap.biz.id
+  network: grpc
+  grpc-opts:
+    grpc-service-name: tpghSzyflcBWso9sc
+- name: "sg.siap.biz.id tls grpc direct vmess \xA7 443 3"
+  type: vmess
+  server: sg.siap.biz.id
+  port: 443
+  udp: true
+  alpn:
+  - h2
+  skip-cert-verify: false
+  uuid: 56b3754c-9dfa-496c-bd1b-8ab02dc5699b
+  servername: sg.siap.biz.id
+  tls: true
+  packet-encoding: xudp
+  alterId: 0
+  cipher: auto
+  network: grpc
+  grpc-opts:
+    grpc-service-name: OAQSP95jDBWso9sc
+- name: "sg.siap.biz.id http WS direct vmess \xA7 80 3"
+  type: vmess
+  server: sg.siap.biz.id
+  port: 80
+  udp: true
+  alpn:
+  - http/1.1
+  skip-cert-verify: false
+  uuid: 56b3754c-9dfa-496c-bd1b-8ab02dc5699b
+  servername: sg.siap.biz.id
+  tls: false
+  packet-encoding: xudp
+  alterId: 0
+  cipher: auto
+  network: ws
+  ws-opts:
+    path: /OAQSP95jDx4hYsVJxhNTpQ
+    headers:
+      Host: sg.siap.biz.id
+- name: "sg.siap.biz.id http tcp direct vmess \xA7 80 3"
+  type: vmess
+  server: sg.siap.biz.id
+  port: 80
+  udp: true
+  alpn:
+  - http/1.1
+  skip-cert-verify: false
+  uuid: 56b3754c-9dfa-496c-bd1b-8ab02dc5699b
+  servername: sg.siap.biz.id
+  tls: false
+  packet-encoding: xudp
+  alterId: 0
+  cipher: auto
+  network: http
+  http-opts:
+    path:
+    - /OAQSP95jDCXkdCC9
+    host:
+    - sg.siap.biz.id
+
+
+# proxy-providers:
+#   %for t in (['http','tls'] if hconfigs[ConfigEnum.http_proxy_enable] else ['tls'])
+#   %for port in hconfigs[ConfigEnum.http_ports if t=='http' else ConfigEnum.tls_ports].split(',')
+#   %set phttp=port if t=='http' else None
+#   %set ptls=port if t=='tls' else None
+#   all_proxies_:
+#     type: http
+#     url: "https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/56b3754c-9dfa-496c-bd1b-8ab02dc5699b/clash/normal/proxies.yml?mode=None&ptls=&phttp=&461159"
+#     # path: sg.siap.biz.id/56b3754c-9dfa-496c-bd1b-8ab02dc5699b-normal---proxies461159.yaml
+#     path: sg.siap.biz.id/--461159.yaml
+#     health-check:
+#       enable: true
+#       interval: 600
+#       url: http://www.gstatic.com/generate_204    
+#   %endfor
+#   %endfor
+rule-providers:
+
+  blocked:
+    type: http
+    behavior: classical
+    url: "https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/clash/rules/blocked-sites.yml"
+    path: ./ruleset/blocked.yaml
+    interval: 432000
+
+  tmpblocked:
+    type: http
+    behavior: classical
+    url: "https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/clash/rules/tmp-blocked-sites.yml"
+    path: ./ruleset/tmpblocked.yaml
+    interval: 432000
+
+  open:
+    type: http
+    behavior: classical
+    url: "https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/clash/rules/open-sites.yml"
+    path: ./ruleset/open.yaml
+    interval: 432000    
+
+  # ads:
+  #   type: http
+  #   behavior: classical
+  #   url: "https://sg.siap.biz.id/k44iTDusLYbMIIkL5vO0OiCuLIaj/clash/rules/ads-sites.yml"
+  #   path: ./ruleset/ads.yaml
+  #   interval: 432000   
+
+rules:
+  - DOMAIN,www.unwomen.org,DIRECT
+  # - DOMAIN,sg.siap.biz.id,DIRECT
+  # - DOMAIN,,DIRECT
+  # - IP-CIDR,/32,DIRECT
+  - IP-CIDR,10.10.34.0/24,PROXY
+  - RULE-SET,tmpblocked,PROXY
+  - RULE-SET,blocked,PROXY
+  # - IP-CIDR,10.10.34.0/24,REJECT
+  # - RULE-SET,tmpblocked,REJECT
+  # - RULE-SET,blocked,REJECT
+  - GEOIP,IR,DIRECT
+  - DOMAIN-SUFFIX,.ir,DIRECT
+  - RULE-SET,open,DIRECT
+  # - RULE-SET,ads,REJECT
+  - MATCH,PROXY
+
+
+tun:
+  enable: true
+  stack: system # or gvisor
+  dns-hijack:
+    - any:53
+  auto-redir: true
+  auto-route: true
+  auto-detect-interface: true
