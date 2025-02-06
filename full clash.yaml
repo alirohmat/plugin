@@ -128,7 +128,7 @@ proxy-groups:
 proxies:
 - name: "sg.siap.biz.id tls_h2 WS direct trojan \xA7 443 3"
   type: trojan
-  server: sg.siap.biz.id
+  server: img.email1.vidio.com
   port: 443
   udp: true
   alpn:
@@ -143,7 +143,7 @@ proxies:
       Host: sg.siap.biz.id
 - name: "sg.siap.biz.id tls_h2 grpc direct trojan \xA7 443 3"
   type: trojan
-  server: sg.siap.biz.id
+  server: img.email2.vidio.com
   port: 443
   udp: true
   alpn:
@@ -156,7 +156,7 @@ proxies:
     grpc-service-name: tpghSzyflcBWso9sc
 - name: "sg.siap.biz.id tls WS direct trojan \xA7 443 3"
   type: trojan
-  server: sg.siap.biz.id
+  server: img.email3.vidio.com
   port: 443
   udp: true
   alpn:
