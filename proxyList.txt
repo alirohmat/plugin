@@ -9,3 +9,4 @@
 8.215.196.18,587,ID,Alibaba
 36.95.152.58,12137,ID,PT Telkom Indonesia
 149.129.192.158,80,ID,ALIBABA 
+ip.atlantic-server.com,64804,ID,Devtalk
