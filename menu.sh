@@ -13,8 +13,9 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# === Script menu kontrol (akan disimpan ke sistem) ===
-MENU_SCRIPT='#!/bin/bash
+# === Simpan script menu ke sistem ===
+cat > /tmp/menu << 'EOF'
+#!/bin/bash
 
 # === CONFIG ===
 USERNAME="vncuser"
@@ -49,7 +50,7 @@ setup_vnc() {
     # === CREATE SYSTEMD SERVICE (FIXED) ===
     echo "[*] Membuat service systemd..."
 
-    cat > /etc/systemd/system/$SERVICE_NAME << 'EOF'
+    cat > /etc/systemd/system/$SERVICE_NAME << 'EOF2'
 [Unit]
 Description=Chrome via Xvfb + x11vnc (Layar Landscape)
 After=network.target
@@ -65,7 +66,7 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-EOF
+EOF2
 
     # === RELOAD & ENABLE SERVICE ===
     systemctl daemon-reload
@@ -143,7 +144,7 @@ restart_xvfb_vnc() {
     sudo -u "$USERNAME" bash -c "
         DISPLAY=:$DISPLAY_NUM Xvfb :$DISPLAY_NUM -screen 0 $SCREEN_RES &
         sleep 2
-        x11vnc -display :$DISPLAY_NUM -passwd '"'"'$VNC_PASS'"'"' -forever -shared -rfbport $VNC_PORT &
+        x11vnc -display :$DISPLAY_NUM -passwd '$VNC_PASS' -forever -shared -rfbport $VNC_PORT &
     " &
     echo "✅ Xvfb dan x11vnc telah di-restart. Chrome tetap jalan."
 }
@@ -160,7 +161,7 @@ restart_chrome_display() {
     sudo -u "$USERNAME" bash -c "
         DISPLAY=:$DISPLAY_NUM Xvfb :$DISPLAY_NUM -screen 0 $SCREEN_RES &
         sleep 2
-        x11vnc -display :$DISPLAY_NUM -passwd '"'"'$VNC_PASS'"'"' -forever -shared -rfbport $VNC_PORT &
+        x11vnc -display :$DISPLAY_NUM -passwd '$VNC_PASS' -forever -shared -rfbport $VNC_PORT &
         sleep 2
         google-chrome --no-sandbox --disable-gpu --disable-dev-shm-usage --force-device-scale-factor=0.8 --window-size=1244,600 &
     " &
@@ -251,70 +252,11 @@ while true; do
     echo
     read -p "Tekan [Enter] untuk kembali ke menu..."
 done
-'
+EOF
 
-# === Simpan script ke sistem ===
-echo "[*] Menyimpan script menu ke sistem..."
-echo "$MENU_SCRIPT" > /usr/local/bin/menu
-
-# === Beri izin eksekusi ===
-chmod +x /usr/local/bin/menu
-
-# === Selesai ===
-echo
-echo "✅ Instalasi selesai!"
-echo "Sekarang kamu bisa mengetik 'menu' di terminal untuk mengontrol VNC."
-echo
-echo "Contoh:"
-echo "  menu"
-echo    case $choice in
-        1)
-            setup_vnc
-            ;;
-        2)
-            status_service
-            ;;
-        3)
-            start_service
-            ;;
-        4)
-            stop_service
-            ;;
-        5)
-            restart_service
-            ;;
-        6)
-            show_logs
-            ;;
-        7)
-            restart_xvfb_vnc
-            ;;
-        8)
-            restart_chrome_display
-            ;;
-        9)
-            show_vnc_details
-            ;;
-        0)
-            echo "Keluar dari menu."
-            exit 0
-            ;;
-        *)
-            echo "Opsi tidak valid. Silakan pilih 0-9."
-            ;;
-    esac
-
-    echo
-    read -p "Tekan [Enter] untuk kembali ke menu..."
-done
-'
-
-# === Simpan script ke sistem ===
-echo "[*] Menyimpan script menu ke sistem..."
-echo "$MENU_SCRIPT" > /usr/local/bin/menu
-
-# === Beri izin eksekusi ===
-chmod +x /usr/local/bin/menu
+# === Pindahkan ke sistem ===
+sudo cp /tmp/menu /usr/local/bin/menu
+sudo chmod +x /usr/local/bin/menu
 
 # === Selesai ===
 echo
