@@ -20,7 +20,7 @@ cat > /tmp/menu << 'EOF'
 # === CONFIG ===
 USERNAME="vncuser"
 DISPLAY_NUM="2"
-SCREEN_RES="1244x600x24"
+SCREEN_RES="1920x1080x24"  # Diubah ke resolusi Full HD
 VNC_PASS="senori8899"
 VNC_PORT="5902"
 SERVICE_NAME="chrome-vnc.service"
@@ -43,7 +43,7 @@ setup_vnc() {
     # === INSTALL GOOGLE CHROME ===
     if ! command -v google-chrome >/dev/null 2>&1; then
         echo "[*] Menginstal Google Chrome..."
-        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb 
         apt install -y ./google-chrome-stable_current_amd64.deb
     fi
 
@@ -52,7 +52,7 @@ setup_vnc() {
 
     cat > /etc/systemd/system/$SERVICE_NAME << 'EOF2'
 [Unit]
-Description=Chrome via Xvfb + x11vnc (Layar Landscape)
+Description=Chrome via Xvfb + x11vnc (Layar Full HD)
 After=network.target
 
 [Service]
@@ -60,7 +60,7 @@ Type=forking
 User=vncuser
 Environment=DISPLAY=:2
 ExecStartPre=/bin/sleep 3
-ExecStart=/bin/bash -c "Xvfb :2 -screen 0 1244x600x24 & x11vnc -display :2 -passwd senori8899 -forever -shared -rfbport 5902 -o /tmp/x11vnc.log & google-chrome --no-sandbox --disable-gpu --disable-dev-shm-usage --force-device-scale-factor=0.8 --window-size=1244,600 &"
+ExecStart=/bin/bash -c "Xvfb :2 -screen 0 1920x1080x24 & x11vnc -display :2 -passwd senori8899 -forever -shared -rfbport 5902 -o /tmp/x11vnc.log & google-chrome --no-sandbox --disable-gpu --disable-dev-shm-usage --force-device-scale-factor=1.0 --window-size=1920,1080 &"  # Diubah ukuran window dan scale factor
 ExecStop=/bin/bash -c "pkill -f Xvfb; pkill -f x11vnc; pkill -f google-chrome"
 Restart=always
 
@@ -77,7 +77,7 @@ EOF2
     if systemctl is-active --quiet "$SERVICE_NAME"; then
         echo
         echo "========================================================"
-        echo " Chrome + VNC (layar landscape) sudah aktif!"
+        echo " Chrome + VNC (layar Full HD) sudah aktif!"
         echo " Akses VNC:  IP_VPS:$VNC_PORT"
         echo " Display:    :$DISPLAY_NUM"
         echo " Ukuran Layar: $SCREEN_RES"
@@ -163,7 +163,7 @@ restart_chrome_display() {
         sleep 2
         x11vnc -display :$DISPLAY_NUM -passwd '$VNC_PASS' -forever -shared -rfbport $VNC_PORT &
         sleep 2
-        google-chrome --no-sandbox --disable-gpu --disable-dev-shm-usage --force-device-scale-factor=0.8 --window-size=1244,600 &
+        google-chrome --no-sandbox --disable-gpu --disable-dev-shm-usage --force-device-scale-factor=1.0 --window-size=1920,1080 &  # Diubah ukuran window dan scale factor
     " &
     echo "✅ Chrome dan VNC display telah di-restart."
 }
