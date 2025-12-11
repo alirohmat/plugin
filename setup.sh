@@ -5,11 +5,11 @@
 # ===============================
 
 spinner() {
-    local pid=$!
+    local pid=$1
     local delay=0.15
     local spin=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
 
-    while kill -0 $pid 2>/dev/null; do
+    while kill -0 "$pid" 2>/dev/null; do
         for i in "${spin[@]}"; do
             echo -ne "\r$i $SPIN_TEXT"
             sleep $delay
@@ -19,9 +19,11 @@ spinner() {
 }
 
 run_with_spinner() {
-    SPIN_TEXT=$1
+    SPIN_TEXT="$1"
     shift
-    ($@) & spinner
+    ("$@" &> /dev/null) &
+    cmd_pid=$!
+    spinner $cmd_pid
 }
 
 echo "========================================"
@@ -42,8 +44,8 @@ EOF
 # ------------------------------
 # 2. Update + upgrade Debian
 # ------------------------------
-run_with_spinner "Update & upgrade..." apt update -y
-run_with_spinner "Meng-upgrade paket..." apt upgrade -y
+run_with_spinner "Update paket..." apt update
+run_with_spinner "Upgrade paket..." apt upgrade -y
 
 # ------------------------------
 # 3. Install XRDP + XFCE
@@ -69,9 +71,10 @@ chmod +x /home/ali/.xsession
 # ------------------------------
 run_with_spinner "Menginstal Chrome..." bash -c '
 apt install -y wget gpg
-wget https://dl.google.com/linux/linux_signing_key.pub -O /usr/share/keyrings/google-linux-keyring.gpg
+wget https://dl.google.com/linux/linux_signing_key.pub -O - | gpg --dearmor > /usr/share/keyrings/google-linux-keyring.gpg
+chmod 644 /usr/share/keyrings/google-linux-keyring.gpg
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
-apt update -y
+apt update
 apt install -y google-chrome-stable
 '
 
@@ -89,8 +92,9 @@ echo "[ -s \"\$NVM_DIR/nvm.sh\" ] && \\. \"\$NVM_DIR/nvm.sh\"" >> ~/.bashrc
 # ------------------------------
 run_with_spinner "Menginstal VS Code..." bash -c '
 wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/packages.microsoft.gpg
+chmod 644 /usr/share/keyrings/packages.microsoft.gpg
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list
-apt update -y
+apt update
 apt install -y code
 '
 
