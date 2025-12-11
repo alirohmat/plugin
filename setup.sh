@@ -5,11 +5,11 @@
 # ===============================
 
 spinner() {
-    local pid=$1
+    local pid=$!
     local delay=0.15
     local spin=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
 
-    while kill -0 "$pid" 2>/dev/null; do
+    while kill -0 $pid 2>/dev/null; do
         for i in "${spin[@]}"; do
             echo -ne "\r$i $SPIN_TEXT"
             sleep $delay
@@ -19,11 +19,9 @@ spinner() {
 }
 
 run_with_spinner() {
-    SPIN_TEXT="$1"
+    SPIN_TEXT=$1
     shift
-    ("$@" &> /dev/null) &
-    cmd_pid=$!
-    spinner $cmd_pid
+    ($@) & spinner
 }
 
 echo "========================================"
@@ -44,18 +42,36 @@ EOF
 # ------------------------------
 # 2. Update + upgrade Debian
 # ------------------------------
-run_with_spinner "Update paket..." apt update
-run_with_spinner "Upgrade paket..." apt upgrade -y
+run_with_spinner "Update & upgrade..." apt update -y
+run_with_spinner "Meng-upgrade paket..." apt upgrade -y
 
 # ------------------------------
-# 3. Install XRDP + XFCE
+# 3. Tambah SWAP 2 GB + swappiness 60
+# ------------------------------
+run_with_spinner "Menambah swap 2GB..." bash -c '
+if [ ! -f /swapfile ]; then
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+fi
+'
+
+run_with_spinner "Mengatur swappiness ke 60..." bash -c '
+sysctl vm.swappiness=60
+echo "vm.swappiness=60" > /etc/sysctl.d/99-swappiness.conf
+'
+
+# ------------------------------
+# 4. Install XRDP + XFCE
 # ------------------------------
 run_with_spinner "Menginstal XFCE4..." apt install -y xfce4
 run_with_spinner "Menginstal XRDP..." apt install -y xrdp
 systemctl enable xrdp --now
 
 # ------------------------------
-# 4. Buat user ali
+# 5. Buat user ali
 # ------------------------------
 run_with_spinner "Membuat user ali..." bash -c '
 useradd -m -s /bin/bash ali
@@ -67,19 +83,18 @@ chmod +x /home/ali/.xsession
 '
 
 # ------------------------------
-# 5. Install Google Chrome
+# 6. Install Google Chrome
 # ------------------------------
 run_with_spinner "Menginstal Chrome..." bash -c '
 apt install -y wget gpg
-wget https://dl.google.com/linux/linux_signing_key.pub -O - | gpg --dearmor > /usr/share/keyrings/google-linux-keyring.gpg
-chmod 644 /usr/share/keyrings/google-linux-keyring.gpg
+wget https://dl.google.com/linux/linux_signing_key.pub -O /usr/share/keyrings/google-linux-keyring.gpg
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
-apt update
+apt update -y
 apt install -y google-chrome-stable
 '
 
 # ------------------------------
-# 6. Install NVM (v0.40.3)
+# 7. Install NVM (v0.40.3)
 # ------------------------------
 run_with_spinner "Menginstal NVM..." sudo -u ali bash -c '
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
@@ -88,13 +103,12 @@ echo "[ -s \"\$NVM_DIR/nvm.sh\" ] && \\. \"\$NVM_DIR/nvm.sh\"" >> ~/.bashrc
 '
 
 # ------------------------------
-# 7. Install VS Code
+# 8. Install VS Code
 # ------------------------------
 run_with_spinner "Menginstal VS Code..." bash -c '
 wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/packages.microsoft.gpg
-chmod 644 /usr/share/keyrings/packages.microsoft.gpg
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list
-apt update
+apt update -y
 apt install -y code
 '
 
