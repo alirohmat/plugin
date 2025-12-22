@@ -96,7 +96,6 @@ create_user() {
 
   local SESS="$SESSIONS/$USER"
   [[ -d "$SESS" && -f "$SESS/session.meta" ]] && { die "User sudah ada"; return; }
-
   [[ -d "$SESS" ]] && rm -rf "$SESS"
 
   [[ -d "$MASTER_KEMU" ]] || { die "Folder kemulator tidak ditemukan"; return; }
@@ -111,25 +110,31 @@ create_user() {
 
   cleanup_x_lock "$DISP"
 
+  ### ======== START Xvfb ========
   info "Menjalankan Xvfb :$DISP"
   "$XVFB_BIN" ":$DISP" -screen 0 240x340x16 &
   XVFB_PID=$!
 
-  sleep 0.5
-  [[ -d "/proc/$XVFB_PID" ]] || { die "Xvfb gagal"; rm -rf "$SESS"; return; }
+  # Tunggu Xvfb siap (cek lock file)
+  for i in {1..10}; do
+    [[ -d "/proc/$XVFB_PID" ]] || { die "Xvfb mati"; rm -rf "$SESS"; return; }
+    [[ -e "/tmp/.X${DISP}-lock" ]] && break
+    sleep 0.5
+  done
 
+  ### ======== START x11vnc ========
   info "Menjalankan x11vnc :$PORT"
   "$X11VNC_BIN" -display ":$DISP" -rfbport "$PORT" -passwd "$PASS" -forever -shared &
   VNC_PID=$!
 
-  sleep 0.5
-  ss -ln | grep -q ":$PORT " || {
-    die "x11vnc gagal listen"
-    safe_kill "$XVFB_PID" TERM Xvfb
-    rm -rf "$SESS"
-    return
-  }
+  # Tunggu x11vnc bind port
+  for i in {1..10}; do
+    ss -ln | grep -q ":$PORT " && break
+    [[ -d "/proc/$VNC_PID" ]] || { die "x11vnc mati"; safe_kill "$XVFB_PID" Xvfb; rm -rf "$SESS"; return; }
+    sleep 0.5
+  done
 
+  ### ======== START JAVA ========
   info "Menjalankan Java"
   DISPLAY=":$DISP" "$JAVA_BIN" $JAVA_OPTS \
     -jar "$SESS/kemulator/KEmulator.jar" \
@@ -139,12 +144,13 @@ create_user() {
   sleep 1
   [[ -d "/proc/$JAVA_PID" ]] || {
     die "Java gagal start"
-    safe_kill "$VNC_PID" TERM x11vnc
-    safe_kill "$XVFB_PID" TERM Xvfb
+    safe_kill "$VNC_PID" x11vnc
+    safe_kill "$XVFB_PID" Xvfb
     rm -rf "$SESS"
     return
   }
 
+  ### ======== BUAT METADATA ========
   cat >"$SESS/session.meta" <<EOF
 USER=$USER
 DISPLAY=$DISP
@@ -155,6 +161,7 @@ JAVA_PID=$JAVA_PID
 CREATED=$(date +%s)
 EOF
 
+  # Update tokens
   grep -v "^$USER:" "$TOKENS" >"$TOKENS.tmp" || true
   mv "$TOKENS.tmp" "$TOKENS"
   echo "$USER:$LOCAL_IP:$PORT" >>"$TOKENS"
