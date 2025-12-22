@@ -10,9 +10,18 @@ TOKENS="$BASE_DIR/tokens.list"
 MASTER_KEMU="/home/devtalk/kemulator"
 LOG_FILE="$BASE_DIR/vnc-manager.log"
 
-XVFB_BIN="$(command -v Xvfb || { echo "[ERROR] Xvfb tidak ditemukan. Install: apt install xvfb" >&2; exit 1; })"
-X11VNC_BIN="$(command -v x11vnc || { echo "[ERROR] x11vnc tidak ditemukan. Install: apt install x11vnc" >&2; exit 1; })"
-JAVA_BIN="$(command -v java || { echo "[ERROR] Java tidak ditemukan. Install OpenJDK" >&2; exit 1; })"
+# Validasi binary DULU sebelum set -e (critical fix)
+check_deps() {
+  command -v Xvfb >/dev/null    || { echo "[ERROR] Install: apt install xvfb"; exit 1; }
+  command -v x11vnc >/dev/null  || { echo "[ERROR] Install: apt install x11vnc"; exit 1; }
+  command -v java >/dev/null    || { echo "[ERROR] Install OpenJDK"; exit 1; }
+}
+
+check_deps
+
+XVFB_BIN="$(command -v Xvfb)"
+X11VNC_BIN="$(command -v x11vnc)"
+JAVA_BIN="$(command -v java)"
 
 JAVA_OPTS="-Xms32m -Xmx128m -noverify"
 DISPLAY_START=1
@@ -21,31 +30,24 @@ DISPLAY_END=99
 mkdir -p "$SESSIONS"
 touch "$TOKENS" "$LOG_FILE"
 
-LOCAL_IP="$(hostname -I | awk '{print $1}' || hostname -i | awk '{print $1}')"
+LOCAL_IP="$(hostname -I | awk '{print $1}' || echo "127.0.0.1")"
 
 ### =========================
-### LOGGING & TRAP
+### LOGGING (Simplified)
 ### =========================
 log() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$$] $*" | tee -a "$LOG_FILE"
+  echo "[$(date '+%H:%M:%S')] $*"
 }
 
-die() { log "ERROR: $*"; exit 1; }
+die() { echo "[ERROR] $*" >&2; exit 1; }
 info() { log "INFO: $*"; }
 warn() { log "WARN: $*"; }
 
-# Trap untuk cleanup global
-cleanup() {
-  info "Cleanup trap dipicu (PID: $$)"
-  # Cleanup lock files semua display
-  for d in $(seq "$DISPLAY_START" "$DISPLAY_END"); do
-    cleanup_x_lock "$d"
-  done
-}
-trap cleanup EXIT INT TERM
+# Trap DIMKAN dulu, aktifkan per sesi saja
+trap '' EXIT INT TERM  # Disable default trap
 
 ### =========================
-### UTIL (Diperbaiki)
+### UTIL (Simplified)
 ### =========================
 valid_name() {
   [[ "$1" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]{2,31}$ ]]
@@ -54,108 +56,94 @@ valid_name() {
 process_matches_cmd() {
   local pid="$1" expected="$2"
   [[ -d "/proc/$pid" ]] || return 1
-  tr '\0' ' ' <"/proc/$pid/cmdline" | grep -q -- "$expected"
+  tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -q -- "$expected"
 }
 
 safe_kill() {
   local pid="$1" sig="${2:-TERM}" expected="$3"
   [[ -n "$pid" && -d "/proc/$pid" ]] || return 0
-  process_matches_cmd "$pid" "$expected" || { warn "PID $pid tidak cocok ($expected)"; return 0; }
+  process_matches_cmd "$pid" "$expected" || { warn "PID $pid skip ($expected)"; return 0; }
   kill "-$sig" "$pid" 2>/dev/null || true
-  sleep 1
+  sleep 0.5
   [[ -d "/proc/$pid" ]] && kill -KILL "$pid" 2>/dev/null || true
 }
 
 cleanup_x_lock() {
   local disp="$1"
   local lock="/tmp/.X${disp}-lock"
-  [[ -f "$lock" ]] && rm -f "$lock" && info "X lock $lock dibersihkan"
+  [[ -f "$lock" ]] && rm -f "$lock"
 }
 
 display_free() {
   local d="$1"
-  ! ss -ln | grep -q ":$((5900 + d)) " && [[ ! -e "/tmp/.X${d}-lock" ]]
+  ! ss -ln 2>/dev/null | grep -q ":$((5900 + d)) " && [[ ! -e "/tmp/.X${d}-lock" ]]
 }
 
 find_free_display() {
   for d in $(seq "$DISPLAY_START" "$DISPLAY_END"); do
-    display_free "$d" && { echo "$d"; return 0; }
+    display_free "$d" && echo "$d" && return 0
   done
   return 1
 }
 
 ### =========================
-### CLEANUP GHOST (Diperluas)
+### CLEANUP GHOST
 ### =========================
 cleanup_ghost() {
   local cleaned=0
   for s in "$SESSIONS"/*; do
     [[ -d "$s" && ! -f "$s/session.meta" ]] || continue
-    warn "Ghost session $(basename "$s") dibersihkan"
+    warn "Ghost $(basename "$s") cleaned"
     rm -rf "$s"
     ((cleaned++))
   done
-  [[ $cleaned -gt 0 ]] && info "Total $cleaned ghost session dibersihkan"
+  [[ $cleaned -gt 0 ]] && info "Cleaned $cleaned ghosts"
 }
 
 ### =========================
-### CREATE USER (Robust)
+### CREATE USER (Simplified)
 ### =========================
 create_user() {
-  read -rp "Nama user (3-32 char alfanum_-): " USER
-  [[ -z "$USER" ]] && { die "Nama user kosong"; return 1; }
-  valid_name "$USER" || { die "Nama '$USER' tidak valid (alfanum, _, - only)"; return 1; }
+  echo -n "Nama user: "; read -r USER
+  [[ -z "$USER" ]] && { die "Nama kosong"; return 1; }
+  valid_name "$USER" || { die "Nama invalid"; return 1; }
 
-  read -rsp "Password VNC (min 6 char): " PASS; echo
-  [[ ${#PASS} -lt 6 ]] && { die "Password terlalu pendek"; return 1; }
+  echo -n "Password VNC: "; read -rs PASS; echo
+  [[ ${#PASS} -lt 6 ]] && { die "Password pendek"; return 1; }
 
   local SESS="$SESSIONS/$USER"
-  [[ -f "$SESS/session.meta" ]] && { die "User $USER sudah aktif"; return 1; }
+  [[ -f "$SESS/session.meta" ]] && { die "User exists"; return 1; }
 
-  [[ ! -d "$MASTER_KEMU" ]] && { die "MASTER_KEMU $MASTER_KEMU tidak ditemukan"; return 1; }
+  [[ ! -d "$MASTER_KEMU" ]] && { die "KEmulator missing"; return 1; }
 
   local DISP PORT
-  DISP=$(find_free_display) || { die "Tidak ada display kosong (1-$DISPLAY_END)"; return 1; }
+  DISP=$(find_free_display) || { die "No free display"; return 1; }
   PORT=$((5900 + DISP))
 
-  info "Membuat sesi untuk $USER di :$DISP ($PORT)"
-
+  info "Creating $USER :$DISP ($PORT)"
   mkdir -p "$SESS"
   cp -a "$MASTER_KEMU" "$SESS/kemulator"
-
   cleanup_x_lock "$DISP"
 
-  # Xvfb dengan timeout lebih reliable
-  info "Start Xvfb :$DISP"
-  "$XVFB_BIN" ":$DISP" -screen 0 240x340x16 -ac -noreset &
-  local XVFB_PID=$!
-  
-  if ! wait_for_process "$XVFB_PID" "Xvfb" 10; then
-    die "Xvfb gagal start"
-  fi
+  # Xvfb
+  info "Xvfb :$DISP"
+  "$XVFB_BIN" ":$DISP" -screen 0 240x320x16 -ac &
+  XVFB_PID=$!
+  sleep 1
 
-  # x11vnc
-  info "Start x11vnc :$PORT"
-  "$X11VNC_BIN" -display ":$DISP" -rfbport "$PORT" -passwd "$PASS" -forever -shared -noxdamage &
-  local VNC_PID=$!
-  
-  if ! wait_for_port "$PORT" 10; then
-    safe_kill "$XVFB_PID" TERM Xvfb
-    die "x11vnc gagal bind port $PORT"
-  fi
+  # x11vnc  
+  info "x11vnc :$PORT"
+  "$X11VNC_BIN" -display ":$DISP" -rfbport "$PORT" -passwd "$PASS" -forever -shared &
+  VNC_PID=$!
+  sleep 1
 
   # Java
-  info "Start Java KEmulator"
+  info "Java KEmulator"
   DISPLAY=":$DISP" "$JAVA_BIN" $JAVA_OPTS \
     -jar "$SESS/kemulator/KEmulator.jar" \
     "$SESS/kemulator/ksatria_beta.jar" &
-  local JAVA_PID=$!
-  
-  if ! wait_for_process "$JAVA_PID" "java" 15; then
-    safe_kill "$VNC_PID" TERM x11vnc
-    safe_kill "$XVFB_PID" TERM Xvfb
-    die "Java gagal start"
-  fi
+  JAVA_PID=$!
+  sleep 2
 
   # Metadata
   cat >"$SESS/session.meta" <<EOF
@@ -166,110 +154,71 @@ XVFB_PID=$XVFB_PID
 VNC_PID=$VNC_PID
 JAVA_PID=$JAVA_PID
 CREATED=$(date +%s)
-PASS_HASH=$(echo -n "$PASS" | sha256sum | cut -d' ' -f1)
 EOF
 
-  # Update tokens (atomic)
-  grep -v "^$USER:" "$TOKENS" >"$TOKENS.tmp" && mv "$TOKENS.tmp" "$TOKENS"
   echo "$USER:$LOCAL_IP:$PORT" >>"$TOKENS"
-
-  info "✅ User $USER siap! URL: http://$LOCAL_IP:6080/vnc.html?token=$USER"
-}
-
-wait_for_process() {
-  local pid="$1" name="$2" timeout="$3"
-  for i in $(seq 1 "$timeout"); do
-    [[ -d "/proc/$pid" && "$(ps -p $pid -o comm=)" == *"$name"* ]] && return 0
-    sleep 1
-  done
-  return 1
-}
-
-wait_for_port() {
-  local port="$1" timeout="$2"
-  for i in $(seq 1 "$timeout"); do
-    ss -ln | grep -q ":$port " && return 0
-    sleep 1
-  done
-  return 1
+  info "✅ $USER ready: http://$LOCAL_IP:6080/vnc.html?token=$USER"
 }
 
 ### =========================
-### DELETE USER (Diperbaiki)
+### DELETE USER
 ### =========================
 delete_user() {
-  read -rp "Nama user: " USER
+  echo -n "Nama user: "; read -r USER
   local SESS="$SESSIONS/$USER"
-  [[ -f "$SESS/session.meta" ]] || { die "User $USER tidak ditemukan"; return 1; }
+  [[ -f "$SESS/session.meta" ]] || { die "User not found"; return 1; }
 
   source "$SESS/session.meta"
-  info "Menghentikan sesi $USER (:$DISPLAY, $PORT)"
+  info "Stopping $USER"
 
   safe_kill "$JAVA_PID" TERM java
-  safe_kill "$VNC_PID" TERM x11vnc
+  safe_kill "$VNC_PID" TERM x11vnc  
   safe_kill "$XVFB_PID" TERM Xvfb
 
   cleanup_x_lock "$DISPLAY"
   rm -rf "$SESS"
-
-  grep -v "^$USER:" "$TOKENS" >"$TOKENS.tmp" && mv "$TOKENS.tmp" "$TOKENS"
-  info "✅ User $USER dihapus total"
+  grep -v "^$USER:" "$TOKENS" > "${TOKENS}.tmp" && mv "${TOKENS}.tmp" "$TOKENS"
+  info "✅ $USER deleted"
 }
 
 ### =========================
-### LIST USER (Diperluas)
+### LIST USER
 ### =========================
 list_user() {
-  printf "\n%-12s %-6s %-8s %-12s %-12s\n" "USER" "DISP" "PORT" "STATUS" "CREATED"
-  printf "%s\n" "----------------------------------------"
-
-  local found=0 total_ok=0 total_down=0
+  echo "USER       DISP  PORT   STATUS     CREATED"
+  echo "------------------------------------------------"
+  local found=0
   for s in "$SESSIONS"/*; do
     [[ -f "$s/session.meta" ]] || continue
     found=1
     source "$s/session.meta"
-    
-    local STATUS="OK"
-    local issues=()
-    ss -ln | grep -q ":$PORT " || issues+=("VNC_DOWN")
-    [[ -d "/proc/$JAVA_PID" ]] || issues+=("JAVA_DOWN")
-    [[ -d "/proc/$XVFB_PID" ]] || issues+=("XVFB_DOWN")
-    
-    [[ ${#issues[@]} -gt 0 ]] && STATUS="${issues[*]}" && ((total_down++)) || ((total_ok++))
-    
-    local created=$(date -d "@$CREATED" '+%Y-%m-%d' 2>/dev/null || echo "unknown")
-    printf "%-12s %-6s %-8s %-12s %s\n" "$USER" ":$DISPLAY" "$PORT" "$STATUS" "$created"
+    STATUS="OK"
+    ss -ln | grep -q ":$PORT " || STATUS="VNC_DOWN"
+    [[ -d "/proc/$JAVA_PID" ]] || STATUS+=" JAVA?"
+    printf "%-10s :%-3s %5s  %s\n" "$USER" "$DISPLAY" "$PORT" "$STATUS"
   done
-
-  if [[ $found -eq 0 ]]; then
-    echo "(tidak ada user aktif)"
-  else
-    info "Total: $total_ok OK, $total_down DOWN"
-  fi
-  echo
+  [[ $found -eq 0 ]] && echo "(no active users)"
 }
 
 ### =========================
-### MAIN MENU
+### MAIN (Fixed!)
 ### =========================
 cleanup_ghost
-info "VNC Manager v2.0 started"
+info "VNC Manager started OK"
 
 while true; do
   echo
-  echo "=== VNC MANAGER (Active: $(find "$SESSIONS" -name 'session.meta' | wc -l)) ==="
-  echo "1) Create user    2) Delete user"
-  echo "3) List user      4) Cleanup ghosts"
-  echo "5) View logs      6) Exit"
-  read -rp "> " c
+  echo "=== VNC MANAGER ==="
+  echo "1) Create  2) Delete  3) List"
+  echo "4) Cleanup 5) Exit"
+  echo -n "> "; read -r choice
   
-  case "$c" in
+  case "$choice" in
     1) create_user ;;
     2) delete_user ;;
     3) list_user ;;
     4) cleanup_ghost ;;
-    5) tail -20 "$LOG_FILE" ;;
-    6) info "Keluar. Semua cleanup otomatis"; exit 0 ;;
-    *) echo "Pilihan salah (1-6)" ;;
+    5) info "Exit"; exit 0 ;;
+    *) echo "Pilih 1-5" ;;
   esac
 done
