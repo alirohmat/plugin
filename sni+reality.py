@@ -4,7 +4,8 @@ import struct
 
 SERVER_IP = "202.155.94.63"
 SERVER_PORT = 11443
-TIMEOUT = 3
+CONNECT_TIMEOUT = 3
+WAIT_AFTER_SEND = 2
 
 SNI_LIST = [
     "zenius.net",
@@ -14,71 +15,80 @@ SNI_LIST = [
 ]
 
 def build_client_hello(sni):
-    # TLS 1.2 ClientHello minimal + SNI
     sni_bytes = sni.encode()
     server_name = b"\x00" + struct.pack("!H", len(sni_bytes)) + sni_bytes
     server_name_list = struct.pack("!H", len(server_name)) + server_name
-    sni_ext = (
-        b"\x00\x00" +
-        struct.pack("!H", len(server_name_list) + 2) +
-        server_name_list
-    )
+    sni_ext = b"\x00\x00" + struct.pack("!H", len(server_name_list) + 2) + server_name_list
 
     extensions = sni_ext
     extensions_len = struct.pack("!H", len(extensions))
 
     handshake = (
-        b"\x01" +                # ClientHello
-        b"\x00\x00\x00" +         # length placeholder
-        b"\x03\x03" +             # TLS 1.2
-        b"\x00" * 32 +             # random
-        b"\x00" +                  # session id
-        b"\x00\x02\x13\x01" +      # cipher suites
-        b"\x01\x00" +              # compression
+        b"\x01" +
+        b"\x00\x00\x00" +
+        b"\x03\x03" +
+        b"\x00" * 32 +
+        b"\x00" +
+        b"\x00\x02\x13\x01" +
+        b"\x01\x00" +
         extensions_len +
         extensions
     )
 
     handshake = handshake[:1] + struct.pack("!I", len(handshake) - 4)[1:] + handshake[4:]
 
-    record = (
-        b"\x16\x03\x01" +
-        struct.pack("!H", len(handshake)) +
-        handshake
-    )
-
+    record = b"\x16\x03\x01" + struct.pack("!H", len(handshake)) + handshake
     return record
 
 def probe_sni(sni):
-    data = build_client_hello(sni)
+    debug = {}
     start = time.time()
 
     try:
-        sock = socket.create_connection((SERVER_IP, SERVER_PORT), timeout=TIMEOUT)
-        sock.sendall(data)
+        sock = socket.create_connection(
+            (SERVER_IP, SERVER_PORT),
+            timeout=CONNECT_TIMEOUT
+        )
+        debug["tcp_connect_ms"] = int((time.time() - start) * 1000)
 
-        sock.settimeout(1)
+        data = build_client_hello(sni)
+        sock.sendall(data)
+        debug["client_hello_sent"] = True
+
+        sock.settimeout(WAIT_AFTER_SEND)
         try:
-            sock.recv(1)
-            return "PASS", int((time.time() - start) * 1000)
+            recv_start = time.time()
+            data = sock.recv(1)
+            debug["server_response"] = "DATA"
+            debug["response_delay_ms"] = int((time.time() - recv_start) * 1000)
+            result = "RESPOND"
         except socket.timeout:
-            return "PASS", int((time.time() - start) * 1000)
+            debug["server_response"] = "NO_RESPONSE"
+            result = "PASS"
+        except ConnectionResetError:
+            debug["server_response"] = "RST"
+            result = "RESET"
 
     except ConnectionResetError:
-        return "RESET", None
+        result = "RESET_EARLY"
     except socket.timeout:
-        return "TIMEOUT", None
-    except Exception:
-        return "FAIL", None
+        result = "CONNECT_TIMEOUT"
+    except Exception as e:
+        result = "ERROR"
+        debug["error"] = str(e)
     finally:
         try:
             sock.close()
         except:
             pass
 
+    debug["total_time_ms"] = int((time.time() - start) * 1000)
+    return result, debug
+
 if __name__ == "__main__":
-    print("SNI".ljust(30), "RESULT", "RTT(ms)")
-    print("-" * 50)
     for sni in SNI_LIST:
-        res, rtt = probe_sni(sni)
-        print(sni.ljust(30), res, rtt if rtt else "-")
+        result, dbg = probe_sni(sni)
+        print("\nSNI:", sni)
+        print("RESULT:", result)
+        for k, v in dbg.items():
+            print(f"  {k}: {v}")
